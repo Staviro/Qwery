@@ -1,0 +1,1 @@
+Qwery is a JavaScript library that allows a developer to add, get and update JSON data in a strucutred way on local storage
