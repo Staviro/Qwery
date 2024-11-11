@@ -283,7 +283,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let item = qwery.get({ dataset: "users", field: "id", value: 2 });
         let update = qwery.update({ dataset: "users", field: "id", value: item.id, data: null });
         if (update.isSuccess == false) consoleTester.pass(_);
@@ -298,7 +298,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let item = qwery.get({ dataset: "users", field: "id", value: 2 });
         let update = qwery.update({ dataset: "users", field: "id", value: item.id, data: undefined });
         if (update.isSuccess == false) consoleTester.pass(_);
@@ -313,7 +313,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let item = qwery.get({ dataset: "users", field: "id", value: 2 });
         let update = qwery.update({ dataset: "users", value: item.id, data: item });
         if (update.isSuccess == false) consoleTester.pass(_);
@@ -328,7 +328,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let item = qwery.get({ dataset: "users", field: "id", value: 2 });
         let update = qwery.update({ dataset: "users", value: item.id, data: item });
         if (update.isSuccess == false) consoleTester.pass(_);
@@ -343,7 +343,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let item = qwery.get({ dataset: "users", field: "id", value: 2 });
         let update = qwery.update({ dataset: "users", value: 51, data: item });
         if (update.isSuccess == false) consoleTester.pass(_);
@@ -358,7 +358,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let result = qwery.removeAll({ dataset: "users" });
         let items = qwery.getAll({ dataset: "users" });
         if (result.isSuccess && items.length == 0) consoleTester.pass(_);
@@ -371,7 +371,6 @@ consoleTester.tests.push({
     name: "Should fail when non existent dataset is used in removeAll()",
     test: function() {
         let _ = this.name;
-        let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
         let result = qwery.removeAll({ dataset: "users3ad434" });
         if (result.isSuccess == false) consoleTester.pass(_);
@@ -386,7 +385,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let result = qwery.remove({ dataset: "users", field: "id", value: 2 });
         let exists = qwery.itemExists({ dataset: "users", field: "id", value: 2 });
         if (result.isSuccess && !exists) consoleTester.pass(_);
@@ -401,7 +400,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let exists = qwery.itemExists({ dataset: "users", field: "id", value: 5 });
         if (!exists) consoleTester.pass(_);
         else consoleTester.fail(_);
@@ -415,7 +414,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let exists = qwery.itemExists({ dataset: "users", field: "id", value: 2 });
         if (exists) consoleTester.pass(_);
         else consoleTester.fail(_);
@@ -429,7 +428,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let result = qwery.remove({ dataset: "users", field: "id" });
         if (!result.isSuccess) consoleTester.pass(_);
         else consoleTester.fail(_);
@@ -443,7 +442,7 @@ consoleTester.tests.push({
         let _ = this.name;
         let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
         const qwery = new Qwery({name: testsQwery, log: false}).create();
-        let response = qwery.addList({ dataset: "users" , data: users });
+        qwery.addList({ dataset: "users" , data: users });
         let result = qwery.remove({ dataset: "users", value: 2 });
         if (!result.isSuccess) consoleTester.pass(_);
         else consoleTester.fail(_);
