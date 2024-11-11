@@ -73,7 +73,7 @@ class Qwery {
     }
 
     /**
-     * Adds a single item into the specified datasets. If dataset name is not found, a new dataset will be created.
+     * Adds a single item into the specified datasets. Creates dataset if it does not exist
      * @param {object} properties
      * @returns {object} { isSuccess: Boolean, message: String }
      */
@@ -106,7 +106,7 @@ class Qwery {
     }
 
     /**
-     * Adds a list of items to a dataset. If dataset name is not found, a new dataset will be created.
+     * Adds a list of items to a dataset. Creates dataset if it does not exist
      * @param {object} properties
      * @returns {object} { isSuccess: Boolean, message: String }
      */

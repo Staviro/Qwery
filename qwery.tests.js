@@ -1,12 +1,8 @@
 'use strict';
-const QweryDB = new Qwery({
-    name: "QweryDB",
-    log: true
-});
 
 
 let testsQwery = "LVJM4mS96M8ICVBPM8SnelbYX1j0B0h9";
-//Configuration tests
+
 consoleTester.tests.push({
     name: "If qwery instance is created and create() is not called, json() should return null",
     test: function() {
@@ -451,6 +447,10 @@ consoleTester.tests.push({
 });
 
 window.addEventListener('load', function() {
+    let label = "%cCompleted In";
+    let style = "color:#5f5; font-size:16px;";
+    console.time(label);
     consoleTester.tests.forEach(function(t) { t.test(); });
     consoleTester.summary();
+    console.timeLog(label, style);
 });

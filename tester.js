@@ -11,7 +11,7 @@ const consoleTester = {
     },
     summary() {
         let style = "color:#5f5; font-size:16px;";
-        console.log('%cLogging summary....', "color:#55f; font-size:16px;");
+        console.log('%cLogging summary...', "color:#99f; font-size:16px;");
         console.log(`%cTotal Tests Executed: ${ consoleTester.passed.length + consoleTester.failed.length }`, style);
         console.log(`%cTotal Tests Passed: ${ consoleTester.passed.length}`, style);
         console.log(`%cTotal Tests Failed: ${ consoleTester.failed.length}`, style);
