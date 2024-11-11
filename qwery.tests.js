@@ -452,8 +452,6 @@ consoleTester.tests.push({
 });
 
 window.addEventListener('load', function() {
-    (function(){
-        consoleTester.tests.forEach(function(t) { t.test(); });
-        consoleTester.summary();
-    })()
+    consoleTester.tests.forEach(function(t) { t.test(); });
+    consoleTester.summary();
 });
