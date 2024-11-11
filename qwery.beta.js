@@ -45,7 +45,6 @@ class Qwery {
     create() {
         let exists = localStorage.getItem(this._qweryKey()) == null ? false : true;
         if (!exists) {
-            //create
             localStorage.setItem(this._qweryKey(), JSON.stringify(this._createBaseJSON()));
             if(this.configuration.log) console.log('New Qwery added');
         } else {
@@ -82,7 +81,7 @@ class Qwery {
         if (!this._qweryExists()) return this._noQweryError();
         let result = this._updateResult(true, "Successfully added item");
         try {
-            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return;
+            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
             let json = this.json();
             let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
@@ -115,7 +114,7 @@ class Qwery {
         if (!this._qweryExists()) return this._noQweryError();
         let result = this._updateResult(true, "Successfully added all items");
         try {
-            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return;
+            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
             let json = this.json();
             let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
@@ -191,7 +190,10 @@ class Qwery {
                 let result = [];
                 let records = 0;
                 for (let i = 0; i < properties.values.length; i++) {
-                    result.push(dataset.data.filter((x) => x[properties.field] == properties.values[i])[0])
+                    let item = dataset.data.filter((x) => x[properties.field] == properties.values[i])[0];
+                    if (item != undefined) {
+                        result.push(item);
+                    }
                     records++;
                 }
                 this._reportGet(result == undefined ? 0 : records);
@@ -235,7 +237,7 @@ class Qwery {
      */
     update(properties) {
         if (!this._qweryExists()) return this._noQweryError();
-        if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "Invalid properties object");
+        if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
         let result = this._updateResult(true, "Successfully updated item")
         try {
             let json = this.json();
@@ -244,43 +246,30 @@ class Qwery {
                 this._reportUpdate(0);
                 return this._updateResult(false, "Could not find table");
             } else {
-                let hasLookup = properties.field == undefined ? false : true;
+                let hasFieldLookup = properties.field == undefined ? false : true;
+                let hasValueLookup = properties.value == undefined ? false : true;
+                if (!hasFieldLookup) return this._updateResult(false, "field key cannot be null");
+                if (!hasValueLookup) return this._updateResult(false, "value key cannot be null");
                 let lookupItem = {};
-                if(!hasLookup) {
-                    lookupItem = dataset.data[0];
-                }
-                else {
-                    lookupItem = dataset.data.filter((item) => item[properties.field] == properties.value)[0];
-                }
-
+                lookupItem = dataset.data.filter((item) => item[properties.field] == properties.value)[0];
                 if (!this.isNullOrUndefinedOrEmpty(lookupItem)) {
-                    if(hasLookup) {
-                        let index = dataset.data.findIndex((item) => item[properties.field] == properties.value);
-                        if (index != -1) {
-                            let propertiesToUpdate = Object.getOwnPropertyNames(properties.data);
-                            for (let i = 0; i < propertiesToUpdate.length; i++) {
-                                dataset.data[index][propertiesToUpdate[i]] = properties.data[propertiesToUpdate[i]];
-                            }
-                            json.datasets.filter(x => x.dataset == properties.dataset)[0] = dataset;
-                            localStorage.setItem(this._qweryKey(), JSON.stringify(json));
-                            this._reportUpdate(1);
-                        } else {
-                            this._reportUpdate(0);
-                        }
-                        return result;
-                    } else {
+                    let index = dataset.data.findIndex((item) => item[properties.field] == properties.value);
+                    if (index != -1) {
                         let propertiesToUpdate = Object.getOwnPropertyNames(properties.data);
                         for (let i = 0; i < propertiesToUpdate.length; i++) {
-                            dataset.data[0][propertiesToUpdate[i]] = properties.data[propertiesToUpdate[i]];
+                            dataset.data[index][propertiesToUpdate[i]] = properties.data[propertiesToUpdate[i]];
                         }
                         json.datasets.filter(x => x.dataset == properties.dataset)[0] = dataset;
                         localStorage.setItem(this._qweryKey(), JSON.stringify(json));
                         this._reportUpdate(1);
-                        return result;
+                    } else {
+                        this._reportUpdate(0);
+                        return this._updateResult(false, "Could not find entry in dataset data.");
                     }
+                    return result;
                 } else {
                     this._reportUpdate(0);
-                    return this._updateResult(false, "Could not find entry in table data.");
+                    return this._updateResult(false, "Could not find entry in dataset data.");
                 }
             }
         } catch(e) {
@@ -297,7 +286,7 @@ class Qwery {
      */
     remove(properties) {
         if (!this._qweryExists()) return this._noQweryError();
-        if (this.isNullOrUndefinedOrEmpty(properties) || this.isEmptyObject(properties)) return this._updateResult(false, "Invalid properties object");
+        if (this.isNullOrUndefinedOrEmpty(properties) || this.isEmptyObject(properties)) return this._updateResult(false, "data field cannot be null");
         let result = this._updateResult(true, "Successfully removed item");
         try {
             let json = this.json();
@@ -306,9 +295,12 @@ class Qwery {
                 this._reportUpdate(0);
                 return this._updateResult(false, "Could not find entry in table data");
             } else {
-                let isNotLookupType = properties.field == undefined ? true: false;
+                let hasFieldLookup = properties.field == undefined ? false : true;
+                let hasValueLookup = properties.value == undefined ? false : true;
+                if (!hasFieldLookup) return this._updateResult(false, "field key cannot be null");
+                if (!hasValueLookup) return this._updateResult(false, "value key cannot be null");
                 let lookupItem = null;
-                if (!isNotLookupType) lookupItem = dataset.data.filter((item) => item[properties.field] == properties.value)[0];
+                lookupItem = dataset.data.filter((item) => item[properties.field] == properties.value)[0];
                 if (!this.isNullOrUndefinedOrEmpty(lookupItem)) {
                     let index = dataset.data.findIndex((item) => item[properties.field] == properties.value);
                     if (index != -1) {
@@ -317,20 +309,14 @@ class Qwery {
                         localStorage.setItem(this._qweryKey(), JSON.stringify(json));
                         this._reportUpdate(1);
                         return result;
-                    }
-                } else if(isNotLookupType) {
-                    let index = dataset.data.findIndex((item) => item == properties.value);
-                    if (index != -1) {
-                        dataset.data.splice(index, 1);
-                        json.datasets.filter(x => x.name == properties.name)[0] = dataset;
-                        localStorage.setItem(this._qweryKey(), JSON.stringify(json));
-                        this._reportUpdate(1);
-                        return result;
+                    } else {
+                        this._reportUpdate(0);
+                        return this._updateResult(false, "Could not find entry in dataset data.");
                     }
                 }
                 else {
                     this._reportUpdate(0);
-                    return this._updateResult(false, "Could not find entry in table data");
+                    return this._updateResult(false, "Could not find entry in dataset data");
                 }
             }
         } catch (e) {
@@ -352,7 +338,6 @@ class Qwery {
             let json = this.json();
             let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset) || this.isEmptyObject(dataset)) {
-                console.log("Could not find dataset");
                 return this._updateResult(false, "Could not find dataset");
             } else {
                 this._reportUpdate(json.datasets.filter(x => x.dataset == properties.dataset)[0].data.length);
