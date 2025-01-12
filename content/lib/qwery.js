@@ -11,8 +11,8 @@
 class Qwery {
     /**
      * Constructor for new Qwery object
-     * @param {Object} config
-     * @returns Currenty Qwery object
+     * @param {object} config
+     * @returns {Qwery} Currenty Qwery object
      */
     constructor(config) {
         this.configuration.name = config.name;
@@ -30,7 +30,7 @@ class Qwery {
 
     /**
      * Resets all information about the object
-     * @returns {object}
+     * @returns {Qwery}
      */
     reset() {
         localStorage.removeItem(this._qweryKey());
@@ -40,7 +40,7 @@ class Qwery {
 
     /**
      * Creates new Qwery in local storage
-     * @returns {object}
+     * @returns {Qwery}
      */
     create() {
         let exists = localStorage.getItem(this._qweryKey()) == null ? false : true;
@@ -422,6 +422,7 @@ class Qwery {
     /**
      * Logs the number of records updated
      * @param {number} records
+     * @private
      */
     _reportUpdate(records) {
         if (this.configuration.log) console.log(`${records} item(s) updated.`);
@@ -430,6 +431,7 @@ class Qwery {
     /**
      * Logs the number of records fetched
      * @param {number} records
+     * @private
      */
     _reportGet(records) {
         if (this.configuration.log) console.log(`${records} item(s) fetched.`);
@@ -448,7 +450,6 @@ class Qwery {
 
     /**
      * Gets key for current Qwery key object
-     * @private
      * @returns {string}
      */
     _qweryKey() {
@@ -462,7 +463,7 @@ class Qwery {
      */
     _createBaseJSON() {
         let date = new Date();
-        let utcDate = `${date.getUTCFullYear()}/${date.getUTCMonth() - 1}/${date.getUTCDay()} ${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getMinutes()}`
+        let utcDate = `${date.getUTCFullYear()}/${date.getUTCMonth() + 1}/${date.getUTCDay()} ${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getMinutes()}`
         let json = {
             datasets: [],
             createdDateTime: utcDate
