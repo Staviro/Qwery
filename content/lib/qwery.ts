@@ -1,9 +1,71 @@
-'use strict';
 /**
     *Qwery JS
     *(c) 2024 Joseph Morukhuladi
     *Licensed under MIT
 */
+
+interface Config {
+    name: string,
+    log: boolean
+}
+
+interface Result {
+    isSuccess: boolean, 
+    message: string
+}
+
+interface Dataset {
+    dataset: string,
+    data: Array<any>
+}
+
+interface QweryModel {
+    createdDateTime: "",
+    datasets: Array<Dataset>
+}
+
+interface AddModel {
+    dataset: string,
+    data: any
+}
+
+interface AddListModel {
+    dataset: string,
+    data: Array<any>
+}
+
+interface GetModel {
+    dataset: string,
+    field?: any
+    value?: any
+}
+
+interface GetListModel {
+    dataset: string,
+    field: any
+    values: Array<any>
+}
+
+interface GetAllModel {
+    dataset: string
+}
+
+interface UpdateModel {
+    dataset: string,
+    data: string,
+    field: string, 
+    value: any
+}
+
+interface RemoveModel {
+    dataset: string,
+    field: string,
+    value: any
+}
+
+interface RemoveAllModel {
+    dataset: string
+}
 
 /**
  * Class for creating Qwery objects
@@ -14,7 +76,7 @@ class Qwery {
      * @param {object} config
      * @returns {Qwery} Currenty Qwery object
      */
-    constructor(config) {
+    constructor(config: Config) {
         this.configuration.name = config.name;
         this.configuration.log = config.log == undefined ? false: config.log;
         return this;
@@ -57,8 +119,10 @@ class Qwery {
      * Gets current Qwery in JSON format
      * @returns {object}
      */
-    json() {
-        return JSON.parse(localStorage.getItem(this._qweryKey()));
+    json(): QweryModel | any {
+        let data: string | null = localStorage.getItem(this._qweryKey()) ?? "";
+        if (data == null || data == "") return null;
+        else JSON.parse(data); 
     }
 
     /**
@@ -67,8 +131,8 @@ class Qwery {
      */
     listDatasets() {
         if (!this._qweryExists()) return this._noQweryError();
-        return this.json().datasets.map((x) => {
-            return x.dataset
+        return this.json().datasets.map((x: Dataset) => {
+            return x.dataset;
         });
     }
 
@@ -77,13 +141,13 @@ class Qwery {
      * @param {object} properties
      * @returns {object} { isSuccess: Boolean, message: String }
      */
-    add(properties) {
+    add(properties: AddModel) {
         if (!this._qweryExists()) return this._noQweryError();
         let result = this._updateResult(true, "Successfully added item");
         try {
             if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
                 let newSet = {
                     dataset: properties.dataset,
@@ -94,11 +158,11 @@ class Qwery {
             }
 
             dataset.data.push(properties.data);
-            json.datasets.filter(x => x.dataset == properties.dataset)[0] = dataset;
+            json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0] = dataset;
             localStorage.setItem(this._qweryKey(), JSON.stringify(json));
             this._reportUpdate(1);
             return result;
-        } catch(e) {
+        } catch(e: any) {
             this._reportUpdate(0);
             console.error('Qwery error: ', e);
             return this._updateResult(false, e.message);
@@ -110,13 +174,13 @@ class Qwery {
      * @param {object} properties
      * @returns {object} { isSuccess: Boolean, message: String }
      */
-    addList(properties) {
+    addList(properties: AddListModel) {
         if (!this._qweryExists()) return this._noQweryError();
         let result = this._updateResult(true, "Successfully added all items");
         try {
             if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
                 let newDataset = {
                     dataset: properties.dataset,
@@ -131,11 +195,11 @@ class Qwery {
                 records++;
             }
 
-            json.datasets.filter(x => x.dataset == properties.dataset)[0] = dataset;
+            json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0] = dataset;
             localStorage.setItem(this._qweryKey(), JSON.stringify(json));
             this._reportUpdate(records);
             return result;
-        } catch(e) {
+        } catch(e: any) {
             this._reportUpdate(0);
             console.error('Qwery error: ', e);
             return this._updateResult(false, e.message);
@@ -147,11 +211,11 @@ class Qwery {
      * @param {object} properties
      * @returns {object | null}
      */
-    get(properties) {
+    get(properties: GetModel) {
         if (!this._qweryExists()) return this._noQweryError();
         try {
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset) || this.isEmptyObject(dataset)) {
                 return null;
             } else {
@@ -159,14 +223,14 @@ class Qwery {
                 let hasValue = properties.value == undefined ? false : true;
                 let result;
                 if (hasField && hasValue) {
-                    result = dataset.data.filter((x) => x[properties.field] == properties.value)[0];
+                    result = dataset.data.filter((x: any) => x[properties.field] == properties.value)[0];
                 } else {
                     result = dataset.data[0];
                 }
                 this._reportGet(result == undefined ? 0 : 1);
                 return result == undefined ? null : result;
             }
-        } catch(e) {
+        } catch(e: any) {
             this._reportGet(0);
             console.error('Qwery error: ', e);
             return null;
@@ -178,19 +242,19 @@ class Qwery {
      * @param {object} properties
      * @returns {Array}
      */
-    getList(properties) {
+    getList(properties: GetListModel) {
         if (!this._qweryExists()) return this._noQweryError();
         try {
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset) || this.isEmptyObject(dataset)) {
                 this._reportGet(0);
                 return null;
             } else {
-                let result = [];
+                let result: any[] = [];
                 let records = 0;
                 for (let i = 0; i < properties.values.length; i++) {
-                    let item = dataset.data.filter((x) => x[properties.field] == properties.values[i])[0];
+                    let item = dataset.data.filter((x: any) => x[properties.field] == properties.values[i])[0];
                     if (item != undefined) {
                         result.push(item);
                     }
@@ -199,7 +263,7 @@ class Qwery {
                 this._reportGet(result == undefined ? 0 : records);
                 return result == undefined ? [] : result;
             }
-        } catch(e) {
+        } catch(e: any) {
             this._reportGet(0);
             console.error('Qwery error: ', e);
             return [];
@@ -211,11 +275,11 @@ class Qwery {
      * @param {object} properties
      * @returns {Array}
      */
-    getAll(properties) {
+    getAll(properties: GetAllModel) {
         if (!this._qweryExists()) return this._noQweryError();
         try {
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset ) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset) || this.isEmptyObject(dataset)) {
                 this._reportGet(0);
                 return [];
@@ -223,7 +287,7 @@ class Qwery {
                 this._reportGet(dataset.data.length);
                 return dataset.data;
             }
-        } catch(e) {
+        } catch(e: any) {
             this._reportGet(0);
             console.error('Qwery error: ', e);
             return [];
@@ -235,13 +299,13 @@ class Qwery {
      * @param {object} properties
      * @returns {object} { isSuccess: Boolean, message: String }
      */
-    update(properties) {
+    update(properties: UpdateModel) {
         if (!this._qweryExists()) return this._noQweryError();
         if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
         let result = this._updateResult(true, "Successfully updated item")
         try {
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
                 this._reportUpdate(0);
                 return this._updateResult(false, "Could not find table");
@@ -251,15 +315,15 @@ class Qwery {
                 if (!hasFieldLookup) return this._updateResult(false, "field key cannot be null");
                 if (!hasValueLookup) return this._updateResult(false, "value key cannot be null");
                 let lookupItem = {};
-                lookupItem = dataset.data.filter((item) => item[properties.field] == properties.value)[0];
+                lookupItem = dataset.data.filter((item: any) => item[properties.field] == properties.value)[0];
                 if (!this.isNullOrUndefinedOrEmpty(lookupItem)) {
-                    let index = dataset.data.findIndex((item) => item[properties.field] == properties.value);
+                    let index = dataset.data.findIndex((item: any) => item[properties.field] == properties.value);
                     if (index != -1) {
-                        let propertiesToUpdate = Object.getOwnPropertyNames(properties.data);
+                        let propertiesToUpdate: any[] = Object.getOwnPropertyNames(properties.data);
                         for (let i = 0; i < propertiesToUpdate.length; i++) {
                             dataset.data[index][propertiesToUpdate[i]] = properties.data[propertiesToUpdate[i]];
                         }
-                        json.datasets.filter(x => x.dataset == properties.dataset)[0] = dataset;
+                        json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0] = dataset;
                         localStorage.setItem(this._qweryKey(), JSON.stringify(json));
                         this._reportUpdate(1);
                     } else {
@@ -272,7 +336,7 @@ class Qwery {
                     return this._updateResult(false, "Could not find entry in dataset data.");
                 }
             }
-        } catch(e) {
+        } catch(e: any) {
             this._reportUpdate(0);
             console.error('Qwery error: ', e);
             return this._updateResult(false, e.message);
@@ -284,13 +348,13 @@ class Qwery {
      * @param {object} properties
      * @returns {object} { isSuccess: Boolean, message: String }
      */
-    remove(properties) {
+    remove(properties: RemoveModel) {
         if (!this._qweryExists()) return this._noQweryError();
         if (this.isNullOrUndefinedOrEmpty(properties) || this.isEmptyObject(properties)) return this._updateResult(false, "data field cannot be null");
         let result = this._updateResult(true, "Successfully removed item");
         try {
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
                 this._reportUpdate(0);
                 return this._updateResult(false, "Could not find entry in table data");
@@ -300,12 +364,12 @@ class Qwery {
                 if (!hasFieldLookup) return this._updateResult(false, "field key cannot be null");
                 if (!hasValueLookup) return this._updateResult(false, "value key cannot be null");
                 let lookupItem = null;
-                lookupItem = dataset.data.filter((item) => item[properties.field] == properties.value)[0];
+                lookupItem = dataset.data.filter((item: any) => item[properties.field] == properties.value)[0];
                 if (!this.isNullOrUndefinedOrEmpty(lookupItem)) {
-                    let index = dataset.data.findIndex((item) => item[properties.field] == properties.value);
+                    let index = dataset.data.findIndex((item: any) => item[properties.field] == properties.value);
                     if (index != -1) {
                         dataset.data.splice(index, 1);
-                        json.datasets.filter(x => x.dataset == properties.dataset)[0] = dataset;
+                        json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0] = dataset;
                         localStorage.setItem(this._qweryKey(), JSON.stringify(json));
                         this._reportUpdate(1);
                         return result;
@@ -319,7 +383,7 @@ class Qwery {
                     return this._updateResult(false, "Could not find entry in dataset data");
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             this._reportUpdate(0);
             console.error('Qwery error: ', e);
             return this._updateResult(false, e.message);
@@ -331,21 +395,21 @@ class Qwery {
      * @param {object} properties
      * @returns {object}
      */
-    removeAll(properties) {
+    removeAll(properties: RemoveAllModel) {
         if (!this._qweryExists()) return this._noQweryError();
         let result = this._updateResult(true, "Successfully removed all items");
         try {
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset) || this.isEmptyObject(dataset)) {
                 return this._updateResult(false, "Could not find dataset");
             } else {
-                this._reportUpdate(json.datasets.filter(x => x.dataset == properties.dataset)[0].data.length);
-                json.datasets.filter(x => x.dataset == properties.dataset)[0].data = [];
+                this._reportUpdate(json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0].data.length);
+                json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0].data = [];
                 localStorage.setItem(this._qweryKey(), JSON.stringify(json));
                 return result;
             }
-        } catch(e) {
+        } catch(e: any) {
             this._reportUpdate(0);
             console.error('Qwery error: ', e);
             return this._updateResult(false, e.message);
@@ -357,16 +421,16 @@ class Qwery {
      * @param {object} properties
      * @returns {boolean}
      */
-    itemExists(properties) {
+    itemExists(properties: GetModel) {
         if (!this._qweryExists()) return this._noQweryError();
         try {
             let json = this.json();
-            let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
+            let dataset = json.datasets.filter((x: Dataset) => x.dataset == properties.dataset)[0];
             let result;
             if (this.isNullOrUndefinedOrEmpty(dataset) || this.isEmptyObject(dataset)) {
                 return null;
             } else {
-                result = dataset.data.filter((x) => x[properties.field] == properties.value)[0];
+                result = dataset.data.filter((x: any) => x[properties.field] == properties.value)[0];
                 return result == undefined ? false : true;
             }
         } catch(e) {
@@ -380,7 +444,7 @@ class Qwery {
      * @param {string} name
      * @returns {boolean}
      */
-    datasetExists(name) {
+    datasetExists(name: string) {
         if (!this._qweryExists()) return this._noQweryError();
         let datasets = this.listDatasets();
         return datasets.includes(name);
@@ -391,7 +455,7 @@ class Qwery {
      * @param {object} value
      * @returns {boolean}
      */
-    isNullOrUndefinedOrEmpty(value) {
+    isNullOrUndefinedOrEmpty(value: any) {
         if (value === undefined || typeof(value) === "undefined" || value === null || value === "null" || value === "" || value.length == 0) return true;
         else return false;
     }
@@ -401,7 +465,7 @@ class Qwery {
      * @param {object} value
      * @returns {boolean}
      */
-    isEmptyObject(value) {
+    isEmptyObject(value: any) {
         if (Object.keys(value).length == 0) return true;
         else return false;
     }
@@ -410,7 +474,7 @@ class Qwery {
      * Generates a unique key
      * @returns {string}
      */
-    newUniqueKey() {
+    newUniqueKey(): string {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_';
         let key = "";
         for (let i = 0; i < 32; i++) {
@@ -424,7 +488,7 @@ class Qwery {
      * @param {number} records
      * @private
      */
-    _reportUpdate(records) {
+    private _reportUpdate(records: number) {
         if (this.configuration.log) console.log(`${records} item(s) updated.`);
     }
 
@@ -433,7 +497,7 @@ class Qwery {
      * @param {number} records
      * @private
      */
-    _reportGet(records) {
+    private _reportGet(records: number) {
         if (this.configuration.log) console.log(`${records} item(s) fetched.`);
     }
 
@@ -442,10 +506,11 @@ class Qwery {
      * @returns {object}
      * @private
      */
-    _updateResult(isSuccess, message) {
-        return {
+    private _updateResult(isSuccess: boolean, message: string): Result {
+        let result: Result = {
             isSuccess, message
         }
+        return result;
     }
 
     /**
@@ -461,7 +526,7 @@ class Qwery {
      * @returns {object}
      * @private
      */
-    _createBaseJSON() {
+    private _createBaseJSON() {
         let date = new Date();
         let utcDate = `${date.getUTCFullYear()}/${date.getUTCMonth() + 1}/${date.getUTCDay()} ${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getMinutes()}`
         let json = {
@@ -489,3 +554,5 @@ class Qwery {
         return this;
     }
 }
+
+export default Qwery;

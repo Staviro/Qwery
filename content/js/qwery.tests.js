@@ -323,6 +323,19 @@ jsert.add("Should fail on remove if value key is null", function () {
     qwery.reset();
 });
 
+
+jsert.add("Should pass on remove when removing user with id 1", function () {
+    let users = [{ id: 1, name: "Sam Good XII" }, { id: 2, name: "Sam Good XIII" }, { id: 3, name: "Sam Good XVI" }];
+    const qwery = new Qwery({ name: testsQwery, log: false }).create();
+    qwery.addList({ dataset: "users", data: users });
+    let result = qwery.remove({ dataset: "users", field: "id", value: 1 });
+    let get = qwery.get({ dataset: "users", field: "id", value: 1});
+    if (result.isSuccess && get == null) jsert.pass(this);
+    else jsert.fail(this);
+    qwery.reset();
+});
+
+
 window.addEventListener('load', function () {
     jsert.run();
 });
