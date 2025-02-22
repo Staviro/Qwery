@@ -1,6 +1,6 @@
 'use strict';
 
-const jsert = new Jsert();
+const jsert = new Jsert("Library tests");
 const testsQwery = "LVJM4mS96M8ICVBPM8SnelbYX1j0B0h9";
 
 jsert.add("If qwery instance is created and create() is not called, json() should return null", function () {
