@@ -475,10 +475,12 @@ class Qwery {
      * @returns {string}
      */
     newUniqueKey(): string {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_';
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_-';
         let key = "";
         for (let i = 0; i < 32; i++) {
-            key = key + characters[Math.floor(Math.random() * characters.length)];
+            if (i == 0) key = key + letters[Math.floor(Math.random() * letters.length)];
+            else key = key + characters[Math.floor(Math.random() * characters.length)];
         }
         return key;
     }
@@ -552,6 +554,19 @@ class Qwery {
     _noQweryError() {
         console.warn('Qwery object has not been created. Please use the create() method to create add Qwery item to local storage');
         return this;
+    }
+
+    /**
+     * Gets size of localstorage for current domain in KiB
+     * @returns { Number }
+     */
+    currentSizeInKB() {
+        let keys = Object.keys(localStorage);
+        let length = 0;
+        keys.forEach(x => {
+            length += localStorage[x].length;
+        })
+        return Number((length / 1024).toFixed(2));
     }
 }
 

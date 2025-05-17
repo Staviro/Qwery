@@ -335,7 +335,34 @@ jsert.add("Should pass on remove when removing user with id 1", function () {
     qwery.reset();
 });
 
+jsert.add("Generate 50 unique ids", function () {
+    const qwery = new Qwery({ name: testsQwery, log: false }).create();
+    const ids = [];
+    for (let i = 0; i < 50; i++) {
+        ids.push(qwery.newUniqueKey());
+    }
+    let result = qwery.addList({ dataset: "uniqueIds", data: ids });
+    let getAll = qwery.getAll({ dataset: "uniqueIds" });
+    let hasDuplicate = false;
+    let iteration = 0;
+
+    while (iteration < getAll.length)
+    {
+        for(let i = 0; i < getAll.length; i++) {
+            if (i != iteration && getAll[i] == getAll[iteration]) {
+                hasDuplicate = true;
+            }
+        }
+        iteration++;
+    }
+
+    if (result.isSuccess && getAll.length != 0 && !hasDuplicate) jsert.pass(this);
+    else jsert.fail(this);
+    qwery.reset();
+});
+
 
 window.addEventListener('load', function () {
     jsert.run();
+    console.log(jsert.passed)
 });
