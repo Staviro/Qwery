@@ -353,6 +353,33 @@ class Qwery {
     }
 
     /**
+     * Removes an entire dataset
+     * @param {string} name 
+     * @returns 
+     */
+    removeDataset(name) {
+        if (!this._qweryExists()) return this._noQweryError();
+        let result = this._updateResult(true, "Successfully removed dataset");
+        try {
+            let json = this.json();
+            let dataset = json.datasets.filter(x => x.dataset == name)[0];
+            if (this.isNullOrUndefinedOrEmpty(dataset) || this.isEmptyObject(dataset)) {
+                return this._updateResult(false, "Could not find dataset");
+            } else {
+                this._reportUpdate(1);
+                let datasetIndex = json.datasets.indexOf(dataset);
+                json.datasets.splice(datasetIndex, 1)
+                localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+                return result;
+            }
+        } catch(e) {
+            this._reportUpdate(0);
+            console.error('Qwery error: ', e);
+            return this._updateResult(false, e.message);
+        }
+    }
+
+    /**
      * Checks if an item exists in a dataset
      * @param {object} properties
      * @returns {boolean}

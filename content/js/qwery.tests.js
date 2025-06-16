@@ -361,8 +361,33 @@ jsert.add("Generate 50 unique ids", function () {
     qwery.reset();
 });
 
+jsert.add("Should remove a dataset called 'users'", function () {
+    const qwery = new Qwery({ name: testsQwery, log: false }).create();
+    let dataset = "users";
+    let data = { userId: 123, name: "John" };
+    qwery.add({ dataset, data });
+    let result = qwery.removeDataset(dataset);
+    let exists = qwery.datasetExists(dataset);
+    if (result.isSuccess && !exists) jsert.pass(this);
+    else jsert.fail(this);
+    qwery.reset();
+});
+
+jsert.add("Should remove a dataset called 'users' and leave 'test'", function () {
+    const qwery = new Qwery({ name: testsQwery, log: false }).create();
+    let dataset = "users";
+    let data = { userId: 123, name: "John" };
+    qwery.add({ dataset, data });
+    qwery.add({ dataset: "test", data: { sample: true }});
+    let result = qwery.removeDataset(dataset);
+    let exists = qwery.datasetExists(dataset);
+    let datasets = qwery.listDatasets();
+    if (result.isSuccess && !exists && datasets.length == 1) jsert.pass(this);
+    else jsert.fail(this);
+    qwery.reset();
+});
+
 
 window.addEventListener('load', function () {
     jsert.run();
-    console.log(jsert.passed)
 });
