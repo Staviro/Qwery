@@ -387,6 +387,21 @@ jsert.add("Should remove a dataset called 'users' and leave 'test'", function ()
     qwery.reset();
 });
 
+jsert.add("Should fail when data key is missing on add method", function() {
+    const qwery = new Qwery({ name: testsQwery, log: false}).create();
+    let result = qwery.add({ dataset: "test" });
+    if (result.message === qwery.messages.dataRequired) jsert.pass(this)
+    else jsert.fail(this); 
+    qwery.reset();
+});
+
+jsert.add("Should fail when dataset key is missing on add method", function() {
+    const qwery = new Qwery({ name: testsQwery, log: false}).create();
+    let result = qwery.add({ data: "test" });
+    if (result.message === qwery.messages.datasetRequired) jsert.pass(this)
+    else jsert.fail(this); 
+    qwery.reset();
+})
 
 window.addEventListener('load', function () {
     jsert.run();

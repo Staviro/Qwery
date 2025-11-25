@@ -1,7 +1,7 @@
 'use strict';
 /**
     *Qwery JS
-    *(c) 2024 Joseph Morukhuladi
+    *(c) 2025 Joseph Morukhuladi
     *Licensed under MIT
 */
 
@@ -26,6 +26,11 @@ class Qwery {
     configuration = {
         name: "",
         log: false
+    }
+
+    messages = {
+        dataRequired: "'data' key is required",
+        datasetRequired: "'dataset' key is required"
     }
 
     /**
@@ -81,7 +86,8 @@ class Qwery {
         if (!this._qweryExists()) return this._noQweryError();
         let result = this._updateResult(true, "Successfully added item");
         try {
-            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
+            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, this.messages.dataRequired);
+            if (this.isNullOrUndefinedOrEmpty(properties.dataset)) return this._updateResult(false, this.messages.datasetRequired);
             let json = this.json();
             let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
@@ -114,7 +120,8 @@ class Qwery {
         if (!this._qweryExists()) return this._noQweryError();
         let result = this._updateResult(true, "Successfully added all items");
         try {
-            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, "data key cannot be null");
+            if (this.isNullOrUndefinedOrEmpty(properties.data) || this.isEmptyObject(properties.data)) return this._updateResult(false, this.messages.dataRequired);
+            if (this.isNullOrUndefinedOrEmpty(properties.dataset)) return this._updateResult(false, this.messages.datasetRequired);
             let json = this.json();
             let dataset = json.datasets.filter(x => x.dataset == properties.dataset)[0];
             if (this.isNullOrUndefinedOrEmpty(dataset)) {
