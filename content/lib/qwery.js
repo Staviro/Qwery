@@ -1,7 +1,7 @@
 "use strict";
 /**
  *Qwery JS
- *(c) 2025 Joseph Morukhuladi
+ *(c) 2026 Joseph Morukhuladi
  *Licensed under MIT
  */
 
