@@ -11,22 +11,25 @@
 class Qwery {
   /**
    * Constructor for new Qwery object
-   * @param {object} config
+   * @param {Object} config - The configuration settings.
+   * @param {string} config.name - The name of the instance.
+   * @param {boolean} config.log - Whether to enable logging.
+   * @param {boolean} config.encode - Whether to encode the output.
    * @returns {Qwery} Currenty Qwery object
    */
   constructor(config) {
     this.configuration.name = config.name;
     this.configuration.log = config.log == undefined ? false : config.log;
+    this.configuration.encode =
+      config.encode === undefined ? false : config.encode;
+
     return this;
   }
 
   /**
    * Defines the configuration for the object
    */
-  configuration = {
-    name: "",
-    log: false,
-  };
+  configuration = {};
 
   messages = {
     dataRequired: "'data' key is required",
@@ -50,10 +53,7 @@ class Qwery {
   create() {
     let exists = localStorage.getItem(this._qweryKey()) == null ? false : true;
     if (!exists) {
-      localStorage.setItem(
-        this._qweryKey(),
-        JSON.stringify(this._createBaseJSON()),
-      );
+      this._set(this._createBaseJSON());
       if (this.configuration.log) console.log("New Qwery added");
     } else {
       if (this.configuration.log) console.log("Qwery key already exists");
@@ -66,7 +66,12 @@ class Qwery {
    * @returns {object}
    */
   json() {
-    return JSON.parse(localStorage.getItem(this._qweryKey()));
+    const _c = this.configuration;
+    if (_c.encode) {
+      return this._decodeBase64ToJson(localStorage.getItem(this._qweryKey()));
+    } else {
+      return JSON.parse(localStorage.getItem(this._qweryKey()));
+    }
   }
 
   /**
@@ -111,7 +116,7 @@ class Qwery {
 
       dataset.data.push(properties.data);
       json.datasets.filter((x) => x.dataset == properties.dataset)[0] = dataset;
-      localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+      this._set(json);
       this._reportUpdate(1);
       return result;
     } catch (e) {
@@ -156,7 +161,7 @@ class Qwery {
       }
 
       json.datasets.filter((x) => x.dataset == properties.dataset)[0] = dataset;
-      localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+      this._set(json);
       this._reportUpdate(records);
       return result;
     } catch (e) {
@@ -319,7 +324,7 @@ class Qwery {
             }
             json.datasets.filter((x) => x.dataset == properties.dataset)[0] =
               dataset;
-            localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+            this._set(json);
             this._reportUpdate(1);
           } else {
             this._reportUpdate(0);
@@ -384,7 +389,7 @@ class Qwery {
             dataset.data.splice(index, 1);
             json.datasets.filter((x) => x.dataset == properties.dataset)[0] =
               dataset;
-            localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+            this._set(json);
             this._reportUpdate(1);
             return result;
           } else {
@@ -434,7 +439,7 @@ class Qwery {
         );
         json.datasets.filter((x) => x.dataset == properties.dataset)[0].data =
           [];
-        localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+        this._set(json);
         return result;
       }
     } catch (e) {
@@ -464,7 +469,7 @@ class Qwery {
         this._reportUpdate(1);
         let datasetIndex = json.datasets.indexOf(dataset);
         json.datasets.splice(datasetIndex, 1);
-        localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+        this._set(json);
         return result;
       }
     } catch (e) {
@@ -628,8 +633,8 @@ class Qwery {
    * @private
    */
   _createBaseJSON() {
-    let date = new Date();
-    let utdDateTime = Date.UTC(
+    const date = new Date();
+    const utdDateTime = Date.UTC(
       date.getUTCFullYear(),
       date.getUTCMonth(),
       date.getUTCDate(),
@@ -637,8 +642,8 @@ class Qwery {
       date.getUTCMinutes(),
       date.getUTCSeconds(),
     );
-    let utcStringDateTime = new Date(utdDateTime).toISOString();
-    let json = {
+    const utcStringDateTime = new Date(utdDateTime).toISOString();
+    const json = {
       datasets: [],
       createdDateTime: utcStringDateTime,
     };
@@ -663,6 +668,38 @@ class Qwery {
       "Qwery object has not been created. Please use the create() method to create add Qwery item to local storage",
     );
     return this;
+  }
+
+  /**
+   * Encodes JSON object to Base64 string
+   * @param { object } json
+   * @returns { string }
+   */
+  _encodeJsonToBase64(json) {
+    return btoa(JSON.stringify(json));
+  }
+
+  /**
+   * Decodes Base64 string to JSON object
+   * @param { string } base64String
+   * @returns { object }
+   */
+  _decodeBase64ToJson(base64String) {
+    const decodedString = atob(base64String);
+    return JSON.parse(decodedString);
+  }
+
+  /**
+   * Sets current Qwery object to specified JSON
+   * @param { object } json
+   */
+  _set(json) {
+    const _c = this.configuration;
+    if (_c.encode) {
+      localStorage.setItem(this._qweryKey(), this._encodeJsonToBase64(json));
+    } else {
+      localStorage.setItem(this._qweryKey(), JSON.stringify(json));
+    }
   }
 
   /**

@@ -597,11 +597,34 @@ jsert.test("Should generate a 32 character unique key", function () {
 });
 
 jsert.test("Should generate a 36 character GUID", function () {
-  const qwery = new Qwery({ name: testsQwery, log: false }).create();
+  const qwery = new Qwery({
+    name: testsQwery,
+    log: false,
+  }).create();
   const newGuid = qwery.newGuid();
   jsert.passWhenTruthy(this, newGuid.length === 36);
   qwery.reset();
 });
+
+jsert.test(
+  "Should return success response and correct number of data items when adding 3 valid users and encode option is true",
+  function () {
+    let users = [
+      { id: 1, name: "Sam Good XII" },
+      { id: 2, name: "Sam Good XIII" },
+      { id: 3, name: "Sam Good XVI" },
+    ];
+    const qwery = new Qwery({
+      name: testsQwery,
+      log: false,
+      encode: true,
+    }).create();
+    let response = qwery.addList({ dataset: "users", data: users });
+    let items = qwery.getAll({ dataset: "users" });
+    jsert.passWhenTruthy(this, response.isSuccess && items.length === 3);
+    qwery.reset();
+  },
+);
 
 window.addEventListener("load", function () {
   jsert.run();
