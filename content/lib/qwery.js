@@ -28,9 +28,13 @@ class Qwery {
 
   /**
    * Defines the configuration for the object
+   * @private
    */
   configuration = {};
 
+  /**
+   * @private
+   */
   messages = {
     dataRequired: "'data' key is required",
     datasetRequired: "'dataset' key is required",
@@ -87,8 +91,10 @@ class Qwery {
 
   /**
    * Adds a single item into the specified datasets. Creates dataset if it does not exist
-   * @param {object} properties
-   * @returns {object} { isSuccess: Boolean, message: String }
+   * @param {object} properties Properties object
+   * @param {string} properties.dataset Name of the dataset
+   * @param {any} properties.data Data to be added to the dataset
+   * @returns {{ isSucces: boolean, message: string}} { isSuccess: boolean, message: string }
    */
   add(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -128,8 +134,10 @@ class Qwery {
 
   /**
    * Adds a list of items to a dataset. Creates dataset if it does not exist
-   * @param {object} properties
-   * @returns {object} { isSuccess: Boolean, message: String }
+   * @param {object} properties Properties object
+   * @param {string} properties.dataset Name of the dataset
+   * @param {Array<any>} properties.data A list of data to add to the dataset
+   * @returns {{ isSucces: boolean, message: string}} { isSuccess: boolean, message: string }
    */
   addList(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -174,7 +182,10 @@ class Qwery {
   /**
    * Gets an item from a dataset. Accepts field and value properties as filters or returns first item in dataset by default
    * @param {object} properties
-   * @returns {object | null}
+   * @param {string} properties.dataset Name of the dataset
+   * @param {string} properties.field Name of the key to use when searching in a dataset
+   * @param {any} properties.value Value of the key to use when searching in a dataset
+   * @returns {object | null} {object | null}
    */
   get(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -212,7 +223,10 @@ class Qwery {
   /**
    * Gets a list of data based off filters
    * @param {object} properties
-   * @returns {Array}
+   * @param {string} properties.dataset Name of the dataset
+   * @param {string} properties.field Name of the key to use when searching in a dataset
+   * @param {any} properties.value Value of the key to use when searching in a dataset
+   * @returns { any[] | null } { any[] | null }
    */
   getList(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -252,7 +266,8 @@ class Qwery {
   /**
    * Gets all data from a dataset
    * @param {object} properties
-   * @returns {Array}
+   * @param {string} properties.dataset Name of the dataset
+   * @returns { any[] | null } { any[] | null }
    */
   getAll(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -281,7 +296,11 @@ class Qwery {
   /**
    * Updates an item in a dataset
    * @param {object} properties
-   * @returns {object} { isSuccess: Boolean, message: String }
+   * @param {string} properties.dataset Name of the dataset
+   * @param {string} properties.field Name of the key to use when searching in a dataset
+   * @param {any} properties.value Value of the key to use when searching in a dataset
+   * @param {any} properties.data Updated data for the record
+   * @returns {{ isSuccess: Boolean, message: String }} { isSuccess: Boolean, message: String }
    */
   update(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -352,7 +371,10 @@ class Qwery {
   /**
    * Removes an item from a dataset
    * @param {object} properties
-   * @returns {object} { isSuccess: Boolean, message: String }
+   * @param {string} properties.dataset Name of the dataset
+   * @param {string} properties.field Name of the key to use when searching in a dataset
+   * @param {any} properties.value Value of the key to use when searching in a dataset
+   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
    */
   remove(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -417,7 +439,8 @@ class Qwery {
   /**
    * Removes all items from a dataset
    * @param {object} properties
-   * @returns {object}
+   * @param {string} properties.dataset Name of the dataset
+   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
    */
   removeAll(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -451,8 +474,8 @@ class Qwery {
 
   /**
    * Removes an entire dataset
-   * @param {string} name
-   * @returns
+   * @param {string} name Name of the dataset
+   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
    */
   removeDataset(name) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -482,7 +505,10 @@ class Qwery {
   /**
    * Checks if an item exists in a dataset
    * @param {object} properties
-   * @returns {boolean}
+   * @param {string} properties.dataset Name of the dataset
+   * @param {string} properties.field Name of the key to use when searching in a dataset
+   * @param {any} properties.value Value of the key to use when searching in a dataset
+   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
    */
   itemExists(properties) {
     if (!this._qweryExists()) return this._noQweryError();
@@ -498,6 +524,12 @@ class Qwery {
       ) {
         return null;
       } else {
+        let hasFieldLookup = properties.field == undefined ? false : true;
+        let hasValueLookup = properties.value == undefined ? false : true;
+        if (!hasFieldLookup)
+          return this._updateResult(false, "field key cannot be null");
+        if (!hasValueLookup)
+          return this._updateResult(false, "value key cannot be null");
         result = dataset.data.filter(
           (x) => x[properties.field] == properties.value,
         )[0];
@@ -511,7 +543,7 @@ class Qwery {
 
   /**
    * Checks whether a dataset exists in the current Qwery object
-   * @param {string} name
+   * @param {string} name Name of the dataset
    * @returns {boolean}
    */
   datasetExists(name) {
@@ -557,7 +589,7 @@ class Qwery {
     const characters =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_-";
     let key = "";
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 36; i++) {
       if (i == 0)
         key = key + letters[Math.floor(Math.random() * letters.length)];
       else
@@ -571,7 +603,7 @@ class Qwery {
    * @returns {String}
    */
   newGuid() {
-    const hex = "0123456789abcdef";
+    const hex = "ABCDEF0123456789abcdef";
     let guid = "";
     for (let i = 0; i < 32; i++) {
       if (i === 12) {
@@ -609,7 +641,7 @@ class Qwery {
 
   /**
    * Creates new result object
-   * @returns {object}
+   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: boolean, message: string }
    * @private
    */
   _updateResult(isSuccess, message) {
@@ -629,7 +661,7 @@ class Qwery {
 
   /**
    * Creates a base JSON object for Qwery
-   * @returns {object}
+   * @returns {{ datasets: any[], createdDateTime: string }} { datasets: any[], createdDateTime: string }
    * @private
    */
   _createBaseJSON() {
@@ -704,7 +736,7 @@ class Qwery {
 
   /**
    * Gets size of localstorage for current domain in KiB
-   * @returns { Number }
+   * @returns { number }
    */
   currentSizeInKB() {
     let keys = Object.keys(localStorage);

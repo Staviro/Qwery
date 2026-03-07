@@ -1,6 +1,6 @@
 "use strict";
 
-const jsert = new Jsert("Library tests");
+const jsert = new Jsert({ group: "When using the Qwery.js library" });
 const testsQwery = "LVJM4mS96M8ICVBPM8SnelbYX1j0B0h9";
 
 jsert.test(
@@ -589,10 +589,10 @@ jsert.test(
   },
 );
 
-jsert.test("Should generate a 32 character unique key", function () {
+jsert.test("Should generate a 36 character unique key", function () {
   const qwery = new Qwery({ name: testsQwery, log: false }).create();
   const uniqueKey = qwery.newUniqueKey();
-  jsert.passWhenTruthy(this, uniqueKey.length === 32);
+  jsert.passWhenTruthy(this, uniqueKey.length === 36);
   qwery.reset();
 });
 
@@ -626,6 +626,49 @@ jsert.test(
   },
 );
 
+jsert.test(
+  "Should return a failure when value key is null when using itemExists()",
+  function () {
+    let users = [
+      { id: 1, name: "Sam Good XII" },
+      { id: 2, name: "Sam Good XIII" },
+      { id: 3, name: "Sam Good XVI" },
+    ];
+    const qwery = new Qwery({
+      name: testsQwery,
+      log: false,
+      encode: true,
+    }).create();
+    qwery.addList({ dataset: "users", data: users });
+    const response = qwery.itemExists({ dataset: "users", field: "id" });
+    jsert.passWhenTruthy(this, response.message === "value key cannot be null");
+    qwery.reset();
+  },
+);
+
+jsert.test(
+  "Should return a failure when field is null when using itemExists()",
+  function () {
+    let users = [
+      { id: 1, name: "Sam Good XII" },
+      { id: 2, name: "Sam Good XIII" },
+      { id: 3, name: "Sam Good XVI" },
+    ];
+    const qwery = new Qwery({
+      name: testsQwery,
+      log: false,
+      encode: true,
+    }).create();
+    qwery.addList({ dataset: "users", data: users });
+    const response = qwery.itemExists({ dataset: "users", value: 1 });
+    jsert.passWhenTruthy(this, response.message === "field key cannot be null");
+    qwery.reset();
+  },
+);
+
 window.addEventListener("load", function () {
-  jsert.run();
+  const result = jsert.run();
+  console.log("report: ", result.getJSONReport());
+  console.log("result: ", result);
+  processTestResults(result);
 });
