@@ -4,167 +4,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qwery | Test Suite</title>
+    <title>Qwery.js | Modern NoSQL Storage</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background-color: #f9fafb;
+        :root {
+            --primary: #79AE6F;
+            --secondary: #F2F2F2;
+            --accent: #4A90E2;
+            --text: #333333;
+            --bg: #FFFFFF;
         }
 
-        .test-card:hover {
-            transform: translateX(4px);
-            transition: all 0.2s ease;
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text);
+            background-color: var(--bg);
+            scroll-behavior: smooth;
+        }
+
+        /* Fixed Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: #1a202c;
+            /* Contrast background */
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.05em;
+        }
+
+        /* Mobile Sidebar */
+        #mobileSidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 300px;
+            height: 100%;
+            background-color: #1a202c;
+            z-index: 2000;
+            transition: right 0.3s ease-in-out;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #mobileSidebar.active {
+            right: 0;
+        }
+
+        #mobileSidebar a {
+            color: white;
+        }
+
+        #sidebarOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1500;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+
+        #sidebarOverlay.active {
+            display: block;
+        }
+
+        /* Scrollable Code Blocks */
+        pre {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .code-keyword {
+            color: #f687b3;
+        }
+
+        .code-string {
+            color: #68d391;
+        }
+
+        .code-comment {
+            color: #a0aec0;
+        }
+
+        .code-func {
+            color: #63b3ed;
+        }
+
+        /* Sections */
+        section {
+            padding: 5rem 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero-section {
+            padding-top: 8rem;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: var(--secondary);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .doc-item {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--secondary);
+            padding-bottom: 2rem;
+        }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        footer {
+            background-color: var(--secondary);
+            padding: 4rem 1.5rem;
+            margin-top: 5rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            vertical-align: middle;
         }
     </style>
 </head>
 
-<body class="text-slate-800">
+<body>
 
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl font-bold tracking-tight text-indigo-600">Qwery</span>
-                <span
-                    class="bg-indigo-50 text-indigo-600 text-xs font-bold px-2 py-1 rounded-full border border-indigo-100 uppercase tracking-widest">Beta</span>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="flex items-center gap-3">
+                <span class="brand-name">Qwery</span>
+                <span class="text-xs opacity-60">v1.0.0</span>
             </div>
-            <div class="text-slate-400 text-sm font-medium">
-                Unit Test Runner
+            <div class="hidden md:flex gap-8 text-sm font-medium">
+                <a href="#home" class="hover:text-green-400 transition">Home</a>
+                <a href="#docs" class="hover:text-green-400 transition">Docs</a>
+                <a href="#functions" class="hover:text-green-400 transition">Functions</a>
+                <a href="https://github.com/Staviro/Qwery" target="_blank"
+                    class="hover:text-green-400 transition">GitHub</a>
+                <a href="https://iomushub.co.za/" target="_blank" class="hover:text-green-400 transition">Contact</a>
             </div>
+            <!-- Mobile Menu Toggle -->
+            <button class="md:hidden text-white p-2" id="menuBtn" aria-label="Toggle Menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-6 py-10">
+    <!-- Mobile Sidebar & Overlay -->
+    <div id="sidebarOverlay"></div>
+    <aside id="mobileSidebar">
+        <div class="flex justify-between items-center mb-6">
+            <span class="text-xl font-bold text-green-400">Menu</span>
+            <button id="closeSidebar" class="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <a href="#home" class="mobile-link text-lg hover:text-green-400">Home</a>
+        <a href="#docs" class="mobile-link text-lg hover:text-green-400">Documentation</a>
+        <a href="#functions" class="mobile-link text-lg hover:text-green-400">Functions</a>
+        <hr class="border-gray-700">
+        <a href="https://github.com/Staviro/Qwery" target="_blank" class="text-lg hover:text-green-400">GitHub
+            Repository</a>
+        <a href="https://iomushub.co.za/" target="_blank" class="text-lg hover:text-green-400">Contact Hub</a>
+    </aside>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div
-                class="md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center">
-                <h1 id="group-name" class="text-3xl font-bold text-slate-900 mb-2">--</h1>
-                <p class="text-slate-500">Suite Execution Overview</p>
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
+            Simple NoSQL storage for <span style="color: var(--primary)">Local Storage.</span>
+        </h1>
+        <p class="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+            A lightweight JavaScript library to add, get, and update JSON data in a structured way using a memory cache
+            with persistence.
+        </p>
+        <div class="flex gap-4 justify-center">
+            <a href="#docs" class="btn-primary">Get Started</a>
+            <a href="https://github.com/Staviro/Qwery"
+                class="bg-gray-100 px-8 py-3 rounded-full font-semibold border hover:bg-gray-200">GitHub</a>
+        </div>
+    </section>
 
-                <div class="flex gap-8 mt-8">
-                    <div>
-                        <span class="block text-4xl font-bold text-slate-900" id="total-count">0</span>
-                        <span class="text-slate-400 text-sm uppercase font-bold tracking-wider">Total Tests</span>
-                    </div>
-                    <div class="border-r border-slate-100"></div>
-                    <div>
-                        <span class="block text-4xl font-bold text-emerald-500" id="passed-count">0</span>
-                        <span class="text-emerald-600 text-sm uppercase font-bold tracking-wider">Passed</span>
-                    </div>
-                    <div class="border-r border-slate-100"></div>
-                    <div>
-                        <span class="block text-4xl font-bold text-rose-500" id="failed-count">0</span>
-                        <span class="text-rose-600 text-sm uppercase font-bold tracking-wider">Failed</span>
-                    </div>
-                </div>
+    <!-- Features -->
+    <section class="py-12">
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="card">
+                <h3 class="text-xl font-bold mb-3">Structured Data</h3>
+                <p class="text-gray-600">Manage your JSON objects using datasets, keeping your local storage organized
+                    and queryable.</p>
             </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center">
-                <div style="width: 180px; height: 180px;">
-                    <canvas id="summaryChart"></canvas>
-                </div>
+            <div class="card">
+                <h3 class="text-xl font-bold mb-3">Memory Cache</h3>
+                <p class="text-gray-600">Utilizes internal memory for lightning-fast read operations before syncing to
+                    persistent storage.</p>
+            </div>
+            <div class="card">
+                <h3 class="text-xl font-bold mb-3">Async Ready</h3>
+                <p class="text-gray-600">Built for modern workflows with full Promise support and clean asynchronous
+                    APIs.</p>
             </div>
         </div>
+    </section>
 
-        <div class="space-y-4">
-            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
-                Test Details
-                <span class="h-1 w-1 bg-slate-300 rounded-full"></span>
-                <span class="text-slate-400 font-normal" id="status-string">Checking logs...</span>
-            </h2>
-            <div id="test-container" class="space-y-3">
+    <!-- Documentation -->
+    <section id="docs">
+        <h2 class="text-3xl font-bold mb-12">Documentation</h2>
+
+        <div class="doc-item">
+            <h3 class="text-2xl font-bold mb-4">1. Initialize <span class="text-blue-500">create()</span></h3>
+            <p class="mb-4 text-gray-700">Initialize your Qwery instance. This sets up the initial store in LocalStorage
+                if it doesn't exist.</p>
+            <pre><code><span class="code-keyword">const</span> qwery = <span class="code-keyword">new</span> <span class="code-func">Qwery</span>({ name: <span class="code-string">"my_app_db"</span> });
+<span class="code-keyword">await</span> qwery.<span class="code-func">create</span>();
+
+<span class="code-comment">// Output: The instance itself (chainable)</span></code></pre>
+        </div>
+
+        <div class="doc-item">
+            <h3 class="text-2xl font-bold mb-4">2. Add Data <span class="text-blue-500">add()</span></h3>
+            <p class="mb-4 text-gray-700">Push a new object into a specific dataset.</p>
+            <pre><code><span class="code-keyword">await</span> qwery.<span class="code-func">add</span>({
+    dataset: <span class="code-string">"users"</span>,
+    data: { id: <span class="code-string">"u1"</span>, name: <span class="code-string">"John Doe"</span>, email: <span class="code-string">"john@example.com"</span> }
+});
+
+<span class="code-comment">// Output: Promise&lt;void&gt;</span></code></pre>
+        </div>
+
+        <div class="doc-item">
+            <h3 class="text-2xl font-bold mb-4">3. Retrieve Data <span class="text-blue-500">get()</span></h3>
+            <p class="mb-4 text-gray-700">Fetch items based on a predicate function. Returns a single object if one
+                match is found, or an array for multiple.</p>
+            <pre><code><span class="code-keyword">const</span> user = <span class="code-keyword">await</span> qwery.<span class="code-func">get</span>({
+    dataset: <span class="code-string">"users"</span>,
+    predicate: (x) => x.id === <span class="code-string">"u1"</span>
+});
+
+<span class="code-comment">// Output: { id: "u1", name: "John Doe", ... }</span></code></pre>
+        </div>
+
+        <div class="doc-item">
+            <h3 class="text-2xl font-bold mb-4">4. Update Data <span class="text-blue-500">update()</span></h3>
+            <p class="mb-4 text-gray-700">Merge new values into an existing record identified by a field/value pair.</p>
+            <pre><code><span class="code-keyword">await</span> qwery.<span class="code-func">update</span>({
+    dataset: <span class="code-string">"users"</span>,
+    field: <span class="code-string">"id"</span>,
+    value: <span class="code-string">"u1"</span>,
+    data: { name: <span class="code-string">"Johnny"</span> }
+});
+
+<span class="code-comment">// Output: Promise&lt;void&gt;</span></code></pre>
+        </div>
+
+        <div class="doc-item">
+            <h3 class="text-2xl font-bold mb-4">5. Remove Data <span class="text-blue-500">remove()</span></h3>
+            <p class="mb-4 text-gray-700">Delete an item from a dataset.</p>
+            <pre><code><span class="code-keyword">await</span> qwery.<span class="code-func">remove</span>({
+    dataset: <span class="code-string">"users"</span>,
+    field: <span class="code-string">"id"</span>,
+    value: <span class="code-string">"u1"</span>
+});</code></pre>
+        </div>
+
+        <div class="doc-item">
+            <h3 class="text-2xl font-bold mb-4">6. List Datasets <span class="text-blue-500">listDatasets()</span></h3>
+            <p class="mb-4 text-gray-700">Get an array of all available dataset names in the instance.</p>
+            <pre><code><span class="code-keyword">const</span> sets = qwery.<span class="code-func">listDatasets</span>();
+<span class="code-comment">// Output: ["users", "settings", "posts"]</span></code></pre>
+        </div>
+    </section>
+
+    <!-- Functions API Reference -->
+    <section id="functions" class="bg-gray-50 rounded-3xl mb-12">
+        <h2 class="text-3xl font-bold mb-4">API Reference</h2>
+        <p class="text-gray-600 mb-12">A complete list of methods available on the Qwery instance.</p>
+
+        <div class="api-grid">
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <code class="text-blue-600 font-bold">uuid()</code>
+                <p class="text-sm mt-2 text-gray-600">Generates a standard v4 UUID for unique record IDs.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <code class="text-blue-600 font-bold">count(dataset)</code>
+                <p class="text-sm mt-2 text-gray-600">Returns the number of items in a specified dataset.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <code class="text-blue-600 font-bold">has(options)</code>
+                <p class="text-sm mt-2 text-gray-600">Checks if a specific value exists in a dataset field. Returns
+                    boolean.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <code class="text-blue-600 font-bold">truncate()</code>
+                <p class="text-sm mt-2 text-gray-600">Clears all datasets but preserves the database structure.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <code class="text-blue-600 font-bold">reset()</code>
+                <p class="text-sm mt-2 text-gray-600">Deletes the database from LocalStorage entirely.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <code class="text-blue-600 font-bold">json()</code>
+                <p class="text-sm mt-2 text-gray-600">Returns the raw object state of the entire database.</p>
             </div>
         </div>
-    </main>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="max-w-xs">
+                <span class="brand-name">Qwery</span>
+                <p class="mt-4 text-gray-500 text-sm">
+                    Empowering developers with simple, local storage management. Built for speed and simplicity.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Resources</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="https://github.com/Staviro/Qwery" class="hover:text-blue-500">GitHub Repo</a></li>
+                    <li><a href="https://iomushub.co.za/" class="hover:text-blue-500">Iomus Hub</a></li>
+                    <li><a href="#docs" class="hover:text-blue-500">Documentation</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Company</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="https://iomushub.co.za/" class="hover:text-blue-500">Contact Us</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-6xl mx-auto mt-16 pt-8 border-t border-gray-200 text-center text-gray-400 text-sm">
+            &copy; <span id="year"></span> Qwery.js - Licensed under MIT. Distributed by Iomus Hub.
+        </div>
+    </footer>
+
     <script>
-        function processTestResults(data) {
-            const container = document.getElementById('test-container');
-            const groupHeader = document.getElementById('group-name');
-            const totalEl = document.getElementById('total-count');
-            const passedEl = document.getElementById('passed-count');
-            const failedEl = document.getElementById('failed-count');
-            const statusStr = document.getElementById('status-string');
+        // Set Current Year
+        document.getElementById('year').textContent = new Date().getFullYear();
 
-            // Set Header Info
-            groupHeader.innerText = data.group;
-            totalEl.innerText = data.tests.length;
-            passedEl.innerText = data.passed.length;
-            failedEl.innerText = data.failed.length;
-            statusStr.innerText = `${data.passed.length} passed, ${data.failed.length} failed`;
+        // Mobile Sidebar Logic
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const mobileSidebar = document.getElementById('mobileSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
 
-            // Clear container
-            container.innerHTML = '';
-
-            // Process individual tests
-            data.tests.forEach(test => {
-                const isPassed = data.passed.includes(test.name);
-
-                const testDiv = document.createElement('div');
-                testDiv.className = `test-card flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm ${isPassed ? 'border-slate-100' : 'border-rose-100 bg-rose-50/30'}`;
-
-                const innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="flex-shrink-0">
-                            ${isPassed
-                        ? `<div class="bg-emerald-100 text-emerald-600 p-1.5 rounded-full">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                   </div>`
-                        : `<div class="bg-rose-100 text-rose-600 p-1.5 rounded-full">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                   </div>`
-                    }
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-slate-800">${test.name}</p>
-                            <p class="text-xs text-slate-400 mt-0.5">${data.group}</p>
-                        </div>
-                    </div>
-                    <div class="text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'text-emerald-500' : 'text-rose-500'}">
-                        ${isPassed ? 'Passed' : 'Failed'}
-                    </div>
-                `;
-
-                testDiv.innerHTML = innerHTML;
-                container.appendChild(testDiv);
-            });
-
-            renderChart(data.passed.length, data.failed.length);
+        function toggleSidebar(state) {
+            if (state) {
+                mobileSidebar.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent scroll
+            } else {
+                mobileSidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         }
 
-        function renderChart(passed, failed) {
-            const ctx = document.getElementById('summaryChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Passed', 'Failed'],
-                    datasets: [{
-                        data: [passed, failed],
-                        backgroundColor: ['#10b981', '#f43f5e'],
-                        hoverOffset: 4,
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    cutout: '75%',
-                    plugins: {
-                        legend: { display: false }
-                    }
+        menuBtn.addEventListener('click', () => toggleSidebar(true));
+        closeSidebar.addEventListener('click', () => toggleSidebar(false));
+        sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => toggleSidebar(false));
+        });
+
+        // Smooth scroll adjustment for fixed header
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href === "#") return;
+
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    window.scrollTo({
+                        top: target.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
                 }
             });
-        }
+        });
     </script>
-    <script src="./content/js/lib/jsert.js"></script>
-    <script src="./content/lib/qwery.js"></script>
-    <script src="./content/js/tests/qwery.tests.js"></script>
-    <script src="./content/js/app/screenshot.js"></script>
-    <script src="./content/js/tests/music/qwery-music.tests.js"></script>
 </body>
 
 </html>

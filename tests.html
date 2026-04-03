@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwery | Test Suite</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #f9fafb;
+        }
+
+        .test-card:hover {
+            transform: translateX(4px);
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800">
+
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-bold tracking-tight text-indigo-600">Qwery</span>
+                <span
+                    class="bg-indigo-50 text-indigo-600 text-xs font-bold px-2 py-1 rounded-full border border-indigo-100 uppercase tracking-widest">Beta</span>
+            </div>
+            <div class="text-slate-400 text-sm font-medium">
+                Unit Test Runner
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 py-10">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div
+                class="md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center">
+                <h1 id="group-name" class="text-3xl font-bold text-slate-900 mb-2">--</h1>
+                <p class="text-slate-500">Suite Execution Overview</p>
+
+                <div class="flex gap-8 mt-8">
+                    <div>
+                        <span class="block text-4xl font-bold text-slate-900" id="total-count">0</span>
+                        <span class="text-slate-400 text-sm uppercase font-bold tracking-wider">Total Tests</span>
+                    </div>
+                    <div class="border-r border-slate-100"></div>
+                    <div>
+                        <span class="block text-4xl font-bold text-emerald-500" id="passed-count">0</span>
+                        <span class="text-emerald-600 text-sm uppercase font-bold tracking-wider">Passed</span>
+                    </div>
+                    <div class="border-r border-slate-100"></div>
+                    <div>
+                        <span class="block text-4xl font-bold text-rose-500" id="failed-count">0</span>
+                        <span class="text-rose-600 text-sm uppercase font-bold tracking-wider">Failed</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center">
+                <div style="width: 180px; height: 180px;">
+                    <canvas id="summaryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
+                Test Details
+                <span class="h-1 w-1 bg-slate-300 rounded-full"></span>
+                <span class="text-slate-400 font-normal" id="status-string">Checking logs...</span>
+            </h2>
+            <div id="test-container" class="space-y-3">
+            </div>
+        </div>
+    </main>
+    <script>
+        function processTestResults(data) {
+            const container = document.getElementById('test-container');
+            const groupHeader = document.getElementById('group-name');
+            const totalEl = document.getElementById('total-count');
+            const passedEl = document.getElementById('passed-count');
+            const failedEl = document.getElementById('failed-count');
+            const statusStr = document.getElementById('status-string');
+
+            // Set Header Info
+            groupHeader.innerText = data.group;
+            totalEl.innerText = data.tests.length;
+            passedEl.innerText = data.passed.length;
+            failedEl.innerText = data.failed.length;
+            statusStr.innerText = `${data.passed.length} passed, ${data.failed.length} failed`;
+
+            // Clear container
+            container.innerHTML = '';
+
+            // Process individual tests
+            data.tests.forEach(test => {
+                const isPassed = data.passed.includes(test.name);
+
+                const testDiv = document.createElement('div');
+                testDiv.className = `test-card flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm ${isPassed ? 'border-slate-100' : 'border-rose-100 bg-rose-50/30'}`;
+
+                const innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="flex-shrink-0">
+                            ${isPassed
+                        ? `<div class="bg-emerald-100 text-emerald-600 p-1.5 rounded-full">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                   </div>`
+                        : `<div class="bg-rose-100 text-rose-600 p-1.5 rounded-full">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                   </div>`
+                    }
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">${test.name}</p>
+                            <p class="text-xs text-slate-400 mt-0.5">${data.group}</p>
+                        </div>
+                    </div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'text-emerald-500' : 'text-rose-500'}">
+                        ${isPassed ? 'Passed' : 'Failed'}
+                    </div>
+                `;
+
+                testDiv.innerHTML = innerHTML;
+                container.appendChild(testDiv);
+            });
+
+            renderChart(data.passed.length, data.failed.length);
+        }
+
+        function renderChart(passed, failed) {
+            const ctx = document.getElementById('summaryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Passed', 'Failed'],
+                    datasets: [{
+                        data: [passed, failed],
+                        backgroundColor: ['#10b981', '#f43f5e'],
+                        hoverOffset: 4,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    </script>
+    <script src="./content/js/lib/jsert.js"></script>
+    <script src="./content/lib/qwery.js"></script>
+    <script src="./content/js/tests/qwery.tests.js"></script>
+</body>
+
+</html>

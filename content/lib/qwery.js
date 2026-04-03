@@ -1,749 +1,306 @@
-"use strict";
+"use strict"
 /**
- *Qwery JS
- *(c) 2026 Joseph Morukhuladi
- *Licensed under MIT
+ * Qwery JS v1.0.0
+ * (c) 2026 Joseph Morukhuladi
+ * Licensed under MIT
  */
 
 /**
- * Class for creating Qwery objects
+ * Class for creating and managing a lightweight JSON storage in LocalStorage with memory caching.
  */
 class Qwery {
-  /**
-   * Constructor for new Qwery object
-   * @param {Object} config - The configuration settings.
-   * @param {string} config.name - The name of the instance.
-   * @param {boolean} config.log - Whether to enable logging.
-   * @param {boolean} config.encode - Whether to encode the output.
-   * @returns {Qwery} Currenty Qwery object
-   */
-  constructor(config) {
-    this.configuration.name = config.name;
-    this.configuration.log = config.log == undefined ? false : config.log;
-    this.configuration.encode =
-      config.encode === undefined ? false : config.encode;
+	/**
+	 * Constructor for new Qwery object.
+	 * @param {Object} config - The configuration settings.
+	 * @param {string} config.name - The unique name of the storage instance.
+	 * @param {boolean} [config.log=false] - Whether to enable console logging for operations.
+	 */
+	constructor(config) {
+		this.configuration = {
+			name: config.name,
+			log: config.log ?? false
+		}
+		/** @private */
+		this._db = null
+	}
 
-    return this;
-  }
+	/**
+	 * Internal library messages.
+	 * @private
+	 */
+	messages = {
+		dataRequired: "'data' key is required",
+		datasetRequired: "'dataset' key is required",
+		notCreated: "Qwery object has not been created. Run create() first.",
+		notFound: "Record not found in the dataset."
+	}
 
-  /**
-   * Defines the configuration for the object
-   * @private
-   */
-  configuration = {};
+	/**
+	 * Initializes the Qwery storage and primes the memory cache.
+	 * @returns {Promise<Qwery>} The current Qwery instance.
+	 */
+	async create() {
+		try {
+			const key = this._qweryKey()
+			const raw = localStorage.getItem(key)
+			if (raw === null) {
+				this._db = {
+					datasets: [],
+					createdDateTime: new Date().toISOString()
+				}
+				this._persist()
+				this._log("New Qwery storage created")
+			} else {
+				this._db = JSON.parse(raw)
+				this._log("Qwery storage loaded into memory")
+			}
+			return this
+		} catch (e) {
+			console.error("Qwery: Initialization failed", e)
+			return this
+		}
+	}
 
-  /**
-   * @private
-   */
-  messages = {
-    dataRequired: "'data' key is required",
-    datasetRequired: "'dataset' key is required",
-  };
+	/**
+	 * Returns the current state of the database from memory.
+	 * @returns {Object|null}
+	 */
+	json() {
+		return this._db
+	}
 
-  /**
-   * Resets all information about the object
-   * @returns {Qwery}
-   */
-  reset() {
-    localStorage.removeItem(this._qweryKey());
-    if (this.configuration.log) console.log("Qwery reset completed");
-    return this;
-  }
+	/**
+	 * Adds a single item to a dataset. Creates the dataset if it doesn't exist.
+	 * @param {Object} properties
+	 * @param {string} properties.dataset - The name of the target dataset.
+	 * @param {Object} properties.data - The data object to add.
+	 * @returns {Promise<{isSuccess: boolean, message: string}>}
+	 */
+	async add(properties) {
+		try {
+			if (!this._db) throw new Error(this.messages.notCreated)
+			if (!properties.data || Object.keys(properties.data).length === 0)
+				return {isSuccess: false, message: this.messages.dataRequired}
+			if (!properties.dataset)
+				return {isSuccess: false, message: this.messages.datasetRequired}
 
-  /**
-   * Creates new Qwery in local storage
-   * @returns {Qwery}
-   */
-  create() {
-    let exists = localStorage.getItem(this._qweryKey()) == null ? false : true;
-    if (!exists) {
-      this._set(this._createBaseJSON());
-      if (this.configuration.log) console.log("New Qwery added");
-    } else {
-      if (this.configuration.log) console.log("Qwery key already exists");
-    }
-    return this;
-  }
+			let dataset = this._db.datasets.find(
+				(x) => x.dataset === properties.dataset
+			)
+			if (!dataset) {
+				dataset = {dataset: properties.dataset, data: []}
+				this._db.datasets.push(dataset)
+			}
 
-  /**
-   * Gets current Qwery in JSON format
-   * @returns {object}
-   */
-  json() {
-    const _c = this.configuration;
-    if (_c.encode) {
-      return this._decodeBase64ToJson(localStorage.getItem(this._qweryKey()));
-    } else {
-      return JSON.parse(localStorage.getItem(this._qweryKey()));
-    }
-  }
+			dataset.data.push(properties.data)
+			this._persist()
+			this._log(`1 item added to ${properties.dataset}`)
+			return {isSuccess: true, message: "Successfully added item"}
+		} catch (e) {
+			return {isSuccess: false, message: e.message}
+		}
+	}
 
-  /**
-   * Gets a list of all datasets in current Qwery object
-   * @returns {Array}
-   */
-  listDatasets() {
-    if (!this._qweryExists()) return this._noQweryError();
-    return this.json().datasets.map((x) => {
-      return x.dataset;
-    });
-  }
+	/**
+	 * Retrieves data based on a filter function.
+	 * Returns a single object if one match is found, or an array if multiple matches are found.
+	 * @param {Object} properties
+	 * @param {string} properties.dataset - The name of the dataset to search.
+	 * @param {Function} [properties.predicate] - A filter function: (item) => boolean.
+	 * @returns {Promise<Object|Array|null>}
+	 */
+	async get(properties) {
+		try {
+			if (!this._db) return null
+			const dataset = this._db.datasets.find(
+				(x) => x.dataset === properties.dataset
+			)
+			if (!dataset) return null
 
-  /**
-   * Adds a single item into the specified datasets. Creates dataset if it does not exist
-   * @param {object} properties Properties object
-   * @param {string} properties.dataset Name of the dataset
-   * @param {any} properties.data Data to be added to the dataset
-   * @returns {{ isSucces: boolean, message: string}} { isSuccess: boolean, message: string }
-   */
-  add(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    let result = this._updateResult(true, "Successfully added item");
-    try {
-      if (
-        this.isNullOrUndefinedOrEmpty(properties.data) ||
-        this.isEmptyObject(properties.data)
-      )
-        return this._updateResult(false, this.messages.dataRequired);
-      if (this.isNullOrUndefinedOrEmpty(properties.dataset))
-        return this._updateResult(false, this.messages.datasetRequired);
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (this.isNullOrUndefinedOrEmpty(dataset)) {
-        let newSet = {
-          dataset: properties.dataset,
-          data: [],
-        };
-        json.datasets.push(newSet);
-        dataset = newSet;
-      }
+			let results = properties.predicate
+				? dataset.data.filter(properties.predicate)
+				: dataset.data
 
-      dataset.data.push(properties.data);
-      json.datasets.filter((x) => x.dataset == properties.dataset)[0] = dataset;
-      this._set(json);
-      this._reportUpdate(1);
-      return result;
-    } catch (e) {
-      this._reportUpdate(0);
-      console.error("Qwery error: ", e);
-      return this._updateResult(false, e.message);
-    }
-  }
+			this._log(`${results.length} item(s) fetched from ${properties.dataset}`)
 
-  /**
-   * Adds a list of items to a dataset. Creates dataset if it does not exist
-   * @param {object} properties Properties object
-   * @param {string} properties.dataset Name of the dataset
-   * @param {Array<any>} properties.data A list of data to add to the dataset
-   * @returns {{ isSucces: boolean, message: string}} { isSuccess: boolean, message: string }
-   */
-  addList(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    let result = this._updateResult(true, "Successfully added all items");
-    try {
-      if (
-        this.isNullOrUndefinedOrEmpty(properties.data) ||
-        this.isEmptyObject(properties.data)
-      )
-        return this._updateResult(false, this.messages.dataRequired);
-      if (this.isNullOrUndefinedOrEmpty(properties.dataset))
-        return this._updateResult(false, this.messages.datasetRequired);
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (this.isNullOrUndefinedOrEmpty(dataset)) {
-        let newDataset = {
-          dataset: properties.dataset,
-          data: [],
-        };
-        json.datasets.push(newDataset);
-        dataset = newDataset;
-      }
-      let records = 0;
-      for (let i = 0; i < properties.data.length; i++) {
-        dataset.data.push(properties.data[i]);
-        records++;
-      }
+			if (results.length === 0) return null
+			return results.length === 1 ? results[0] : results
+		} catch (e) {
+			console.error("Qwery: Get operation failed", e)
+			return null
+		}
+	}
 
-      json.datasets.filter((x) => x.dataset == properties.dataset)[0] = dataset;
-      this._set(json);
-      this._reportUpdate(records);
-      return result;
-    } catch (e) {
-      this._reportUpdate(0);
-      console.error("Qwery error: ", e);
-      return this._updateResult(false, e.message);
-    }
-  }
+	/**
+	 * Updates a record in a dataset by merging new data.
+	 * @param {Object} properties
+	 * @param {string} properties.dataset - Target dataset.
+	 * @param {string} properties.field - The key used to find the record.
+	 * @param {any} properties.value - The value to match for the field.
+	 * @param {Object} properties.data - The new data to merge into the record.
+	 * @returns {Promise<{isSuccess: boolean, message: string}>}
+	 */
+	async update(properties) {
+		try {
+			if (!this._db) throw new Error(this.messages.notCreated)
+			const dataset = this._db.datasets.find(
+				(x) => x.dataset === properties.dataset
+			)
+			if (!dataset) return {isSuccess: false, message: "Dataset not found"}
 
-  /**
-   * Gets an item from a dataset. Accepts field and value properties as filters or returns first item in dataset by default
-   * @param {object} properties
-   * @param {string} properties.dataset Name of the dataset
-   * @param {string} properties.field Name of the key to use when searching in a dataset
-   * @param {any} properties.value Value of the key to use when searching in a dataset
-   * @returns {object | null} {object | null}
-   */
-  get(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (
-        this.isNullOrUndefinedOrEmpty(dataset) ||
-        this.isEmptyObject(dataset)
-      ) {
-        return null;
-      } else {
-        let hasField = properties.field == undefined ? false : true;
-        let hasValue = properties.value == undefined ? false : true;
-        let result;
-        if (hasField && hasValue) {
-          result = dataset.data.filter(
-            (x) => x[properties.field] == properties.value,
-          )[0];
-        } else {
-          result = dataset.data[0];
-        }
-        this._reportGet(result == undefined ? 0 : 1);
-        return result == undefined ? null : result;
-      }
-    } catch (e) {
-      this._reportGet(0);
-      console.error("Qwery error: ", e);
-      return null;
-    }
-  }
+			const index = dataset.data.findIndex(
+				(item) => item[properties.field] === properties.value
+			)
+			if (index === -1)
+				return {isSuccess: false, message: this.messages.notFound}
 
-  /**
-   * Gets a list of data based off filters
-   * @param {object} properties
-   * @param {string} properties.dataset Name of the dataset
-   * @param {string} properties.field Name of the key to use when searching in a dataset
-   * @param {any} properties.value Value of the key to use when searching in a dataset
-   * @returns { any[] | null } { any[] | null }
-   */
-  getList(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (
-        this.isNullOrUndefinedOrEmpty(dataset) ||
-        this.isEmptyObject(dataset)
-      ) {
-        this._reportGet(0);
-        return null;
-      } else {
-        let result = [];
-        let records = 0;
-        for (let i = 0; i < properties.values.length; i++) {
-          let item = dataset.data.filter(
-            (x) => x[properties.field] == properties.values[i],
-          )[0];
-          if (item != undefined) {
-            result.push(item);
-          }
-          records++;
-        }
-        this._reportGet(result == undefined ? 0 : records);
-        return result == undefined ? [] : result;
-      }
-    } catch (e) {
-      this._reportGet(0);
-      console.error("Qwery error: ", e);
-      return [];
-    }
-  }
+			dataset.data[index] = {...dataset.data[index], ...properties.data}
+			this._persist()
+			this._log(`Updated record in ${properties.dataset}`)
+			return {isSuccess: true, message: "Successfully updated item"}
+		} catch (e) {
+			return {isSuccess: false, message: e.message}
+		}
+	}
 
-  /**
-   * Gets all data from a dataset
-   * @param {object} properties
-   * @param {string} properties.dataset Name of the dataset
-   * @returns { any[] | null } { any[] | null }
-   */
-  getAll(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (
-        this.isNullOrUndefinedOrEmpty(dataset) ||
-        this.isEmptyObject(dataset)
-      ) {
-        this._reportGet(0);
-        return [];
-      } else {
-        this._reportGet(dataset.data.length);
-        return dataset.data;
-      }
-    } catch (e) {
-      this._reportGet(0);
-      console.error("Qwery error: ", e);
-      return [];
-    }
-  }
+	/**
+	 * Removes a record from a dataset.
+	 * @param {Object} properties
+	 * @param {string} properties.dataset
+	 * @param {string} properties.field
+	 * @param {any} properties.value
+	 * @returns {Promise<{isSuccess: boolean, message: string}>}
+	 */
+	async remove(properties) {
+		try {
+			if (!this._db) throw new Error(this.messages.notCreated)
+			const dataset = this._db.datasets.find(
+				(x) => x.dataset === properties.dataset
+			)
+			if (!dataset) return {isSuccess: false, message: "Dataset not found"}
 
-  /**
-   * Updates an item in a dataset
-   * @param {object} properties
-   * @param {string} properties.dataset Name of the dataset
-   * @param {string} properties.field Name of the key to use when searching in a dataset
-   * @param {any} properties.value Value of the key to use when searching in a dataset
-   * @param {any} properties.data Updated data for the record
-   * @returns {{ isSuccess: Boolean, message: String }} { isSuccess: Boolean, message: String }
-   */
-  update(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    if (
-      this.isNullOrUndefinedOrEmpty(properties.data) ||
-      this.isEmptyObject(properties.data)
-    )
-      return this._updateResult(false, "data key cannot be null");
-    let result = this._updateResult(true, "Successfully updated item");
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (this.isNullOrUndefinedOrEmpty(dataset)) {
-        this._reportUpdate(0);
-        return this._updateResult(false, "Could not find table");
-      } else {
-        let hasFieldLookup = properties.field == undefined ? false : true;
-        let hasValueLookup = properties.value == undefined ? false : true;
-        if (!hasFieldLookup)
-          return this._updateResult(false, "field key cannot be null");
-        if (!hasValueLookup)
-          return this._updateResult(false, "value key cannot be null");
-        let lookupItem = {};
-        lookupItem = dataset.data.filter(
-          (item) => item[properties.field] == properties.value,
-        )[0];
-        if (!this.isNullOrUndefinedOrEmpty(lookupItem)) {
-          let index = dataset.data.findIndex(
-            (item) => item[properties.field] == properties.value,
-          );
-          if (index != -1) {
-            let propertiesToUpdate = Object.getOwnPropertyNames(
-              properties.data,
-            );
-            for (let i = 0; i < propertiesToUpdate.length; i++) {
-              dataset.data[index][propertiesToUpdate[i]] =
-                properties.data[propertiesToUpdate[i]];
-            }
-            json.datasets.filter((x) => x.dataset == properties.dataset)[0] =
-              dataset;
-            this._set(json);
-            this._reportUpdate(1);
-          } else {
-            this._reportUpdate(0);
-            return this._updateResult(
-              false,
-              "Could not find entry in dataset data.",
-            );
-          }
-          return result;
-        } else {
-          this._reportUpdate(0);
-          return this._updateResult(
-            false,
-            "Could not find entry in dataset data.",
-          );
-        }
-      }
-    } catch (e) {
-      this._reportUpdate(0);
-      console.error("Qwery error: ", e);
-      return this._updateResult(false, e.message);
-    }
-  }
+			const index = dataset.data.findIndex(
+				(item) => item[properties.field] === properties.value
+			)
+			if (index === -1)
+				return {isSuccess: false, message: this.messages.notFound}
 
-  /**
-   * Removes an item from a dataset
-   * @param {object} properties
-   * @param {string} properties.dataset Name of the dataset
-   * @param {string} properties.field Name of the key to use when searching in a dataset
-   * @param {any} properties.value Value of the key to use when searching in a dataset
-   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
-   */
-  remove(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    if (
-      this.isNullOrUndefinedOrEmpty(properties) ||
-      this.isEmptyObject(properties)
-    )
-      return this._updateResult(false, "data field cannot be null");
-    let result = this._updateResult(true, "Successfully removed item");
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (this.isNullOrUndefinedOrEmpty(dataset)) {
-        this._reportUpdate(0);
-        return this._updateResult(false, "Could not find entry in table data");
-      } else {
-        let hasFieldLookup = properties.field == undefined ? false : true;
-        let hasValueLookup = properties.value == undefined ? false : true;
-        if (!hasFieldLookup)
-          return this._updateResult(false, "field key cannot be null");
-        if (!hasValueLookup)
-          return this._updateResult(false, "value key cannot be null");
-        let lookupItem = null;
-        lookupItem = dataset.data.filter(
-          (item) => item[properties.field] == properties.value,
-        )[0];
-        if (!this.isNullOrUndefinedOrEmpty(lookupItem)) {
-          let index = dataset.data.findIndex(
-            (item) => item[properties.field] == properties.value,
-          );
-          if (index != -1) {
-            dataset.data.splice(index, 1);
-            json.datasets.filter((x) => x.dataset == properties.dataset)[0] =
-              dataset;
-            this._set(json);
-            this._reportUpdate(1);
-            return result;
-          } else {
-            this._reportUpdate(0);
-            return this._updateResult(
-              false,
-              "Could not find entry in dataset data.",
-            );
-          }
-        } else {
-          this._reportUpdate(0);
-          return this._updateResult(
-            false,
-            "Could not find entry in dataset data",
-          );
-        }
-      }
-    } catch (e) {
-      this._reportUpdate(0);
-      console.error("Qwery error: ", e);
-      return this._updateResult(false, e.message);
-    }
-  }
+			dataset.data.splice(index, 1)
+			this._persist()
+			this._log(`Removed record from ${properties.dataset}`)
+			return {isSuccess: true, message: "Successfully removed item"}
+		} catch (e) {
+			return {isSuccess: false, message: e.message}
+		}
+	}
 
-  /**
-   * Removes all items from a dataset
-   * @param {object} properties
-   * @param {string} properties.dataset Name of the dataset
-   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
-   */
-  removeAll(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    let result = this._updateResult(true, "Successfully removed all items");
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      if (
-        this.isNullOrUndefinedOrEmpty(dataset) ||
-        this.isEmptyObject(dataset)
-      ) {
-        return this._updateResult(false, "Could not find dataset");
-      } else {
-        this._reportUpdate(
-          json.datasets.filter((x) => x.dataset == properties.dataset)[0].data
-            .length,
-        );
-        json.datasets.filter((x) => x.dataset == properties.dataset)[0].data =
-          [];
-        this._set(json);
-        return result;
-      }
-    } catch (e) {
-      this._reportUpdate(0);
-      console.error("Qwery error: ", e);
-      return this._updateResult(false, e.message);
-    }
-  }
+	/**
+	 * Clears all data within a specific dataset but keeps the dataset entry.
+	 * @param {Object} properties
+	 * @param {string} properties.dataset
+	 * @returns {Promise<{isSuccess: boolean, message: string}>}
+	 */
+	async removeAll(properties) {
+		try {
+			if (!this._db) throw new Error(this.messages.notCreated)
+			const dataset = this._db.datasets.find(
+				(x) => x.dataset === properties.dataset
+			)
+			if (!dataset) return {isSuccess: false, message: "Dataset not found"}
 
-  /**
-   * Removes an entire dataset
-   * @param {string} name Name of the dataset
-   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
-   */
-  removeDataset(name) {
-    if (!this._qweryExists()) return this._noQweryError();
-    let result = this._updateResult(true, "Successfully removed dataset");
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter((x) => x.dataset == name)[0];
-      if (
-        this.isNullOrUndefinedOrEmpty(dataset) ||
-        this.isEmptyObject(dataset)
-      ) {
-        return this._updateResult(false, "Could not find dataset");
-      } else {
-        this._reportUpdate(1);
-        let datasetIndex = json.datasets.indexOf(dataset);
-        json.datasets.splice(datasetIndex, 1);
-        this._set(json);
-        return result;
-      }
-    } catch (e) {
-      this._reportUpdate(0);
-      console.error("Qwery error: ", e);
-      return this._updateResult(false, e.message);
-    }
-  }
+			dataset.data = []
+			this._persist()
+			this._log(`Cleared all data in ${properties.dataset}`)
+			return {isSuccess: true, message: "Successfully removed all items"}
+		} catch (e) {
+			return {isSuccess: false, message: e.message}
+		}
+	}
 
-  /**
-   * Checks if an item exists in a dataset
-   * @param {object} properties
-   * @param {string} properties.dataset Name of the dataset
-   * @param {string} properties.field Name of the key to use when searching in a dataset
-   * @param {any} properties.value Value of the key to use when searching in a dataset
-   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: Boolean, message: String }
-   */
-  itemExists(properties) {
-    if (!this._qweryExists()) return this._noQweryError();
-    try {
-      let json = this.json();
-      let dataset = json.datasets.filter(
-        (x) => x.dataset == properties.dataset,
-      )[0];
-      let result;
-      if (
-        this.isNullOrUndefinedOrEmpty(dataset) ||
-        this.isEmptyObject(dataset)
-      ) {
-        return null;
-      } else {
-        let hasFieldLookup = properties.field == undefined ? false : true;
-        let hasValueLookup = properties.value == undefined ? false : true;
-        if (!hasFieldLookup)
-          return this._updateResult(false, "field key cannot be null");
-        if (!hasValueLookup)
-          return this._updateResult(false, "value key cannot be null");
-        result = dataset.data.filter(
-          (x) => x[properties.field] == properties.value,
-        )[0];
-        return result == undefined ? false : true;
-      }
-    } catch (e) {
-      console.error("Qwery error: ", e);
-      return false;
-    }
-  }
+	/**
+	 * Returns the number of records in a dataset.
+	 * @param {string} datasetName
+	 * @returns {Promise<number>}
+	 */
+	async count(datasetName) {
+		if (!this._db) return 0
+		const dataset = this._db.datasets.find((x) => x.dataset === datasetName)
+		return dataset ? dataset.data.length : 0
+	}
 
-  /**
-   * Checks whether a dataset exists in the current Qwery object
-   * @param {string} name Name of the dataset
-   * @returns {boolean}
-   */
-  datasetExists(name) {
-    if (!this._qweryExists()) return this._noQweryError();
-    let datasets = this.listDatasets();
-    return datasets.includes(name);
-  }
+	/**
+	 * Checks if a record exists in a dataset.
+	 * @param {Object} properties
+	 * @param {string} properties.dataset
+	 * @param {string} properties.field
+	 * @param {any} properties.value
+	 * @returns {Promise<boolean>}
+	 */
+	async has(properties) {
+		const item = await this.get({
+			dataset: properties.dataset,
+			predicate: (x) => x[properties.field] === properties.value
+		})
+		return item !== null
+	}
 
-  /**
-   * Checks whether a value is null, undefined or empty
-   * @param {object} value
-   * @returns {boolean}
-   */
-  isNullOrUndefinedOrEmpty(value) {
-    if (
-      value === undefined ||
-      typeof value === "undefined" ||
-      value === null ||
-      value === "null" ||
-      value === "" ||
-      value.length == 0
-    )
-      return true;
-    else return false;
-  }
+	/**
+	 * Clears all data across all datasets but maintains the instance.
+	 * @returns {Promise<void>}
+	 */
+	async truncate() {
+		if (!this._db) return
+		this._db.datasets.forEach((ds) => (ds.data = []))
+		this._persist()
+		this._log("Truncated all datasets")
+	}
 
-  /**
-   * Checks whether an object is empty
-   * @param {object} value
-   * @returns {boolean}
-   */
-  isEmptyObject(value) {
-    if (Object.keys(value).length == 0) return true;
-    else return false;
-  }
+	/**
+	 * Deletes the storage key from LocalStorage and clears memory.
+	 * @returns {Promise<Qwery>}
+	 */
+	async reset() {
+		localStorage.removeItem(this._qweryKey())
+		this._db = null
+		this._log("Storage reset and memory cleared")
+		return this
+	}
 
-  /**
-   * Generates a unique key
-   * @returns {string}
-   */
-  newUniqueKey() {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    const characters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_-";
-    let key = "";
-    for (let i = 0; i < 36; i++) {
-      if (i == 0)
-        key = key + letters[Math.floor(Math.random() * letters.length)];
-      else
-        key = key + characters[Math.floor(Math.random() * characters.length)];
-    }
-    return key;
-  }
+	/**
+	 * Generates a cryptographically secure UUID.
+	 * @returns {string}
+	 */
+	uuid() {
+		return crypto.randomUUID()
+	}
 
-  /**
-   * Genereates a new GUID
-   * @returns {String}
-   */
-  newGuid() {
-    const hex = "ABCDEF0123456789abcdef";
-    let guid = "";
-    for (let i = 0; i < 32; i++) {
-      if (i === 12) {
-        guid += "4";
-      } else if (i === 16) {
-        guid += hex[((Math.random() * 4) | 0) + 8];
-      } else {
-        guid += hex[Math.floor(Math.random() * 16)];
-      }
+	/**
+	 * Checks if a dataset exists in storage.
+	 * @param {string} name
+	 * @returns {boolean}
+	 */
+	datasetExists(name) {
+		if (!this._db) return false
+		return this._db.datasets.some((x) => x.dataset === name)
+	}
 
-      if (i === 7 || i === 11 || i === 15 || i === 19) {
-        guid += "-";
-      }
-    }
-    return guid;
-  }
+	/** @private */
+	_log(msg) {
+		if (this.configuration.log)
+			console.log(`Qwery [${this.configuration.name}]: ${msg}`)
+	}
 
-  /**
-   * Logs the number of records updated
-   * @param {number} records
-   * @private
-   */
-  _reportUpdate(records) {
-    if (this.configuration.log) console.log(`${records} item(s) updated.`);
-  }
+	/** @private */
+	_persist() {
+		try {
+			localStorage.setItem(this._qweryKey(), JSON.stringify(this._db))
+		} catch (e) {
+			console.error("Qwery: Persist to LocalStorage failed", e)
+		}
+	}
 
-  /**
-   * Logs the number of records fetched
-   * @param {number} records
-   * @private
-   */
-  _reportGet(records) {
-    if (this.configuration.log) console.log(`${records} item(s) fetched.`);
-  }
-
-  /**
-   * Creates new result object
-   * @returns {{ isSuccess: boolean, message: string }} { isSuccess: boolean, message: string }
-   * @private
-   */
-  _updateResult(isSuccess, message) {
-    return {
-      isSuccess,
-      message,
-    };
-  }
-
-  /**
-   * Gets key for current Qwery key object
-   * @returns {string}
-   */
-  _qweryKey() {
-    return "qwery." + this.configuration.name;
-  }
-
-  /**
-   * Creates a base JSON object for Qwery
-   * @returns {{ datasets: any[], createdDateTime: string }} { datasets: any[], createdDateTime: string }
-   * @private
-   */
-  _createBaseJSON() {
-    const date = new Date();
-    const utdDateTime = Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-      date.getUTCHours(),
-      date.getUTCMinutes(),
-      date.getUTCSeconds(),
-    );
-    const utcStringDateTime = new Date(utdDateTime).toISOString();
-    const json = {
-      datasets: [],
-      createdDateTime: utcStringDateTime,
-    };
-    return json;
-  }
-
-  /**
-   * Checks if Qwery object exists
-   * @returns { boolean }
-   * @private
-   */
-  _qweryExists() {
-    return this.json() == null ? false : true;
-  }
-
-  /**
-   * Throws error when Qwery object has not created
-   * @returns { object }
-   */
-  _noQweryError() {
-    console.warn(
-      "Qwery object has not been created. Please use the create() method to create add Qwery item to local storage",
-    );
-    return this;
-  }
-
-  /**
-   * Encodes JSON object to Base64 string
-   * @param { object } json
-   * @returns { string }
-   */
-  _encodeJsonToBase64(json) {
-    return btoa(JSON.stringify(json));
-  }
-
-  /**
-   * Decodes Base64 string to JSON object
-   * @param { string } base64String
-   * @returns { object }
-   */
-  _decodeBase64ToJson(base64String) {
-    const decodedString = atob(base64String);
-    return JSON.parse(decodedString);
-  }
-
-  /**
-   * Sets current Qwery object to specified JSON
-   * @param { object } json
-   */
-  _set(json) {
-    const _c = this.configuration;
-    if (_c.encode) {
-      localStorage.setItem(this._qweryKey(), this._encodeJsonToBase64(json));
-    } else {
-      localStorage.setItem(this._qweryKey(), JSON.stringify(json));
-    }
-  }
-
-  /**
-   * Gets size of localstorage for current domain in KiB
-   * @returns { number }
-   */
-  currentSizeInKB() {
-    let keys = Object.keys(localStorage);
-    let length = 0;
-    keys.forEach((x) => {
-      length += localStorage[x].length;
-    });
-    return Number((length / 1024).toFixed(2));
-  }
+	/** @private */
+	_qweryKey() {
+		return "qwery." + this.configuration.name
+	}
 }
