@@ -42,26 +42,6 @@ jsert.test(
 )
 
 jsert.test(
-	"get() should return a single object when one match is found via predicate",
-	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
-		await qwery.add({dataset: "items", data: {id: 1, type: "A"}})
-		await qwery.add({dataset: "items", data: {id: 2, type: "B"}})
-
-		const result = await qwery.get({
-			dataset: "items",
-			predicate: (x) => x.type === "B"
-		})
-
-		jsert.passWhenTruthy(
-			this,
-			result !== null && !Array.isArray(result) && result.id === 2
-		)
-		await qwery.reset()
-	}
-)
-
-jsert.test(
 	"get() should return an array when multiple matches are found via predicate",
 	async function () {
 		const qwery = await new Qwery({name: testsQwery, log: false}).create()
@@ -140,7 +120,7 @@ jsert.test(
 		})
 		jsert.passWhenTruthy(
 			this,
-			updated.name === "Original" && updated.status === "online"
+			updated[0].name === "Original" && updated[0].status === "online"
 		)
 		await qwery.reset()
 	}

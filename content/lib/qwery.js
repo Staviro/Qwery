@@ -103,7 +103,7 @@ class Qwery {
 
 	/**
 	 * Retrieves data based on a filter function.
-	 * Returns a single object if one match is found, or an array if multiple matches are found.
+	 * Returns an array if multiple matches are found.
 	 * @param {Object} properties
 	 * @param {string} properties.dataset - The name of the dataset to search.
 	 * @param {Function} [properties.predicate] - A filter function: (item) => boolean.
@@ -124,7 +124,7 @@ class Qwery {
 			this._log(`${results.length} item(s) fetched from ${properties.dataset}`)
 
 			if (results.length === 0) return null
-			return results.length === 1 ? results[0] : results
+			return results
 		} catch (e) {
 			console.error("Qwery: Get operation failed", e)
 			return null
