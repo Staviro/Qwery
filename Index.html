@@ -310,14 +310,14 @@
 
         <div class="doc-item">
             <h3 class="text-2xl font-bold mb-4">3. Retrieve Data <span class="text-blue-500">get()</span></h3>
-            <p class="mb-4 text-gray-700">Fetch items based on a predicate function. Returns a single object if one
-                match is found, or an array for multiple.</p>
+            <p class="mb-4 text-gray-700">Fetch items based on a predicate function. Returns an array of matching
+                items.</p>
             <pre><code><span class="code-keyword">const</span> user = <span class="code-keyword">await</span> qwery.<span class="code-func">get</span>({
     dataset: <span class="code-string">"users"</span>,
     predicate: (x) => x.id === <span class="code-string">"u1"</span>
 });
 
-<span class="code-comment">// Output: { id: "u1", name: "John Doe", ... }</span></code></pre>
+<span class="code-comment">// Output: [{ id: "u1", name: "John Doe", ... }]</span></code></pre>
         </div>
 
         <div class="doc-item">
