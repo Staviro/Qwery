@@ -164,31 +164,40 @@ class Qwery {
 	}
 
 	/**
-	 * Removes a record from a dataset.
+	 * Removes all records from a dataset that match a predicate function.
 	 * @param {Object} properties
 	 * @param {string} properties.dataset
-	 * @param {string} properties.field
-	 * @param {any} properties.value
-	 * @returns {Promise<{isSuccess: boolean, message: string}>}
+	 * @param {function(any): boolean} properties.predicate - Returns true for items to be REMOVED.
+	 * @returns {Promise<{isSuccess: boolean, message: string, count: number}>}
 	 */
 	async remove(properties) {
 		try {
 			if (!this._db) throw new Error(this.messages.notCreated)
+
 			const dataset = this._db.datasets.find(
 				(x) => x.dataset === properties.dataset
 			)
+
 			if (!dataset) return {isSuccess: false, message: "Dataset not found"}
 
-			const index = dataset.data.findIndex(
-				(item) => item[properties.field] === properties.value
-			)
-			if (index === -1)
-				return {isSuccess: false, message: this.messages.notFound}
+			const initialLength = dataset.data.length
 
-			dataset.data.splice(index, 1)
+			dataset.data = dataset.data.filter((item) => !properties.predicate(item))
+
+			const removedCount = initialLength - dataset.data.length
+
+			if (removedCount === 0) {
+				return {isSuccess: false, message: this.messages.notFound}
+			}
+
 			this._persist()
-			this._log(`Removed record from ${properties.dataset}`)
-			return {isSuccess: true, message: "Successfully removed item"}
+			this._log(`Removed ${removedCount} records from ${properties.dataset}`)
+
+			return {
+				isSuccess: true,
+				message: `Successfully removed ${removedCount} item(s)`,
+				count: removedCount
+			}
 		} catch (e) {
 			return {isSuccess: false, message: e.message}
 		}
@@ -229,18 +238,18 @@ class Qwery {
 	}
 
 	/**
-	 * Checks if a record exists in a dataset.
+	 * Checks if a record exists in a dataset using a predicate.
 	 * @param {Object} properties
 	 * @param {string} properties.dataset
-	 * @param {string} properties.field
-	 * @param {any} properties.value
+	 * @param {function(any): boolean} properties.predicate - Function to test each record.
 	 * @returns {Promise<boolean>}
 	 */
 	async has(properties) {
 		const item = await this.get({
 			dataset: properties.dataset,
-			predicate: (x) => x[properties.field] === properties.value
+			predicate: properties.predicate
 		})
+
 		return item !== null
 	}
 

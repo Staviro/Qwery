@@ -32,8 +32,7 @@ jsert.test(
 		await qwery.add({dataset: "users", data: user})
 		const exists = await qwery.has({
 			dataset: "users",
-			field: "id",
-			value: "user_1"
+			predicate: (x) => x.id === "user_1"
 		})
 
 		jsert.passWhenTruthy(this, exists === true)
@@ -127,16 +126,15 @@ jsert.test(
 )
 
 jsert.test(
-	"remove() should delete a specific item from a dataset",
+	"remove() should delete records matching the predicate and return the count of removed items",
 	async function () {
 		const qwery = await new Qwery({name: testsQwery, log: false}).create()
 		await qwery.add({dataset: "tasks", data: {tid: "A1"}})
-		await qwery.remove({dataset: "tasks", field: "tid", value: "A1"})
+		await qwery.remove({dataset: "tasks", predicate: (x) => x.tid === "A1"})
 
 		const exists = await qwery.has({
 			dataset: "tasks",
-			field: "tid",
-			value: "A1"
+			predicate: (x) => x.tid === "A1"
 		})
 		jsert.passWhenFalsy(this, exists)
 		await qwery.reset()

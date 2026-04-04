@@ -66,8 +66,7 @@ Remove a specific record from a dataset based on a field value.
 ```javascript
 await qwery.remove({
 	dataset: "tasks",
-	field: "tid",
-	value: "A1"
+	predicate: (x) => x.id === "A1"
 })
 ```
 
@@ -80,10 +79,10 @@ await qwery.remove({
 - add(properties): Adds a single data object to a specified dataset. Requires 'dataset' and 'data'.
 - get(properties): Retrieves data based on a filter function (predicate). Requires 'dataset' and 'predicate'.
 - update(properties): Updates a record by merging new data into a matching item. Requires 'dataset', 'field', 'value', and 'data'.
-- remove(properties): Deletes a specific record from a dataset. Requires 'dataset', 'field', and 'value'.
-- removeAll(properties): Clears all data within a specific dataset but maintains the dataset entry. Requires 'dataset'.
+- remove(properties): Deletes all matching records from a dataset. Requires 'dataset' and 'predicate'.
+- removeAll(datasetName): Deletes all records from a specific dataset.
 - count(datasetName): Returns the number of records currently in a dataset.
-- has(properties): Checks if a record exists in a dataset based on a field and value.
+- has(properties): Checks if a record exists using a predicate. Requires 'dataset' and 'predicate'.
 - truncate(): Clears all data across all datasets in the instance.
 - reset(): Deletes the storage key from LocalStorage and clears the memory cache.
 - uuid(): Generates a cryptographically secure UUID string.

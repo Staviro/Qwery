@@ -338,8 +338,7 @@
             <p class="mb-4 text-gray-700">Delete an item from a dataset.</p>
             <pre><code><span class="code-keyword">await</span> qwery.<span class="code-func">remove</span>({
     dataset: <span class="code-string">"users"</span>,
-    field: <span class="code-string">"id"</span>,
-    value: <span class="code-string">"u1"</span>
+    predicate: (x) => x.id === <span class="code-string">"u1"</span>
 });</code></pre>
         </div>
 
@@ -366,8 +365,9 @@
                 <p class="text-sm mt-2 text-gray-600">Returns the number of items in a specified dataset.</p>
             </div>
             <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <code class="text-blue-600 font-bold">has(options)</code>
-                <p class="text-sm mt-2 text-gray-600">Checks if a specific value exists in a dataset field. Returns
+                <code class="text-blue-600 font-bold">has(properties)</code>
+                <p class="text-sm mt-2 text-gray-600">Checks if a specific value exists in a dataset using a predicate.
+                    Returns
                     boolean.</p>
             </div>
             <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
