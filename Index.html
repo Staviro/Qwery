@@ -291,8 +291,7 @@
             <h3 class="text-2xl font-bold mb-4">1. Initialize <span class="text-blue-500">create()</span></h3>
             <p class="mb-4 text-gray-700">Initialize your Qwery instance. This sets up the initial store in LocalStorage
                 if it doesn't exist.</p>
-            <pre><code><span class="code-keyword">const</span> qwery = <span class="code-keyword">new</span> <span class="code-func">Qwery</span>({ name: <span class="code-string">"my_app_db"</span> });
-<span class="code-keyword">await</span> qwery.<span class="code-func">create</span>();
+            <pre><code><span class="code-keyword">const</span> qwery = <span class="code-keyword">new</span> <span class="code-func">Qwery</span>({ name: <span class="code-string">"my_app_db"</span> }).<span class="code-func">create</span>();
 
 <span class="code-comment">// Output: The instance itself (chainable)</span></code></pre>
         </div>

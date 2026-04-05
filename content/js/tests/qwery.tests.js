@@ -16,7 +16,7 @@ jsert.test(
 jsert.test(
 	"If qwery instance is created and create() is called, json() should not be null",
 	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
+		const qwery = new Qwery({name: testsQwery, log: false}).create()
 		let json = qwery.json()
 		jsert.passWhenTruthy(this, json != null)
 		await qwery.reset()
@@ -26,7 +26,7 @@ jsert.test(
 jsert.test(
 	"Should successfully add a user and check existence using has()",
 	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
+		const qwery = new Qwery({name: testsQwery, log: false}).create()
 		const user = {id: "user_1", name: "John Doe"}
 
 		await qwery.add({dataset: "users", data: user})
@@ -43,7 +43,7 @@ jsert.test(
 jsert.test(
 	"get() should return an array when multiple matches are found via predicate",
 	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
+		const qwery = new Qwery({name: testsQwery, log: false}).create()
 		await qwery.add({dataset: "items", data: {id: 1, tags: ["new"]}})
 		await qwery.add({dataset: "items", data: {id: 2, tags: ["new"]}})
 
@@ -60,7 +60,7 @@ jsert.test(
 jsert.test(
 	"count() should accurately report the number of items in a dataset",
 	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
+		const qwery = new Qwery({name: testsQwery, log: false}).create()
 		await qwery.add({dataset: "entries", data: {val: 1}})
 		await qwery.add({dataset: "entries", data: {val: 2}})
 		await qwery.add({dataset: "entries", data: {val: 3}})
@@ -74,7 +74,7 @@ jsert.test(
 jsert.test(
 	"truncate() should clear all data while maintaining the dataset structure",
 	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
+		const qwery = new Qwery({name: testsQwery, log: false}).create()
 		await qwery.add({dataset: "temp", data: {active: true}})
 
 		await qwery.truncate()
@@ -100,7 +100,7 @@ jsert.test("uuid() should generate a valid v4 UUID string", async function () {
 jsert.test(
 	"update() should merge new data into an existing record",
 	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
+		const qwery = new Qwery({name: testsQwery, log: false}).create()
 		await qwery.add({
 			dataset: "profile",
 			data: {id: 1, name: "Original", status: "offline"}
@@ -128,7 +128,7 @@ jsert.test(
 jsert.test(
 	"remove() should delete records matching the predicate and return the count of removed items",
 	async function () {
-		const qwery = await new Qwery({name: testsQwery, log: false}).create()
+		const qwery = new Qwery({name: testsQwery, log: false}).create()
 		await qwery.add({dataset: "tasks", data: {tid: "A1"}})
 		await qwery.remove({dataset: "tasks", predicate: (x) => x.tid === "A1"})
 

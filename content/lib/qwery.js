@@ -37,9 +37,9 @@ class Qwery {
 
 	/**
 	 * Initializes the Qwery storage and primes the memory cache.
-	 * @returns {Promise<Qwery>} The current Qwery instance.
+	 * @returns {Qwery} The current Qwery instance.
 	 */
-	async create() {
+	create() {
 		try {
 			const key = this._qweryKey()
 			const raw = localStorage.getItem(key)

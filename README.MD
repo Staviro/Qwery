@@ -24,7 +24,7 @@ const qwery = new Qwery({
 	log: true // Enables console logging for operations
 })
 
-await qwery.create()
+qwery.create()
 ```
 
 ---
