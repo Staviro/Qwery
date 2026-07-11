@@ -141,6 +141,7 @@ jsert.test(
 	}
 )
 
+
 window.addEventListener("load", async function () {
 	const result = await jsert.run()
 	console.log("Qwery 2026 Final Test Report: ", result.getJSONReport())

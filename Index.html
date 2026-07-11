@@ -1,466 +1,1589 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qwery.js | Modern NoSQL Storage</title>
+    <title>Qwery.js v2.0.0 - Lightweight JavaScript Document Database</title>
+    <!-- Google Fonts: DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PrismJS for high-fidelity code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    
+    <!-- Custom Theme Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#79AE6F',
+                            light: '#9CC694',
+                            dark: '#5B8F52',
+                            50: '#F7FAF6',
+                            100: '#EFF5ED',
+                            200: '#D6E6D1',
+                            900: '#23391E'
+                        },
+                        accent: {
+                            DEFAULT: '#4A90E2',
+                            light: '#7FB0EB',
+                            dark: '#2173D1',
+                            50: '#F4F9FD'
+                        },
+                        neutral: {
+                            850: '#1F2937',
+                            950: '#0B0F19'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #79AE6F;
-            --secondary: #F2F2F2;
-            --accent: #4A90E2;
-            --text: #333333;
-            --bg: #FFFFFF;
+        /* Modern Scrollbar customization */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            color: var(--text);
-            background-color: var(--bg);
-            scroll-behavior: smooth;
+        ::-webkit-scrollbar-track {
+            background: #F3F4F6;
         }
-
-        /* Fixed Navigation */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background-color: #1a202c;
-            /* Contrast background */
-            color: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-        }
-
-        .brand-name {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: -0.05em;
-        }
-
-        /* Mobile Sidebar */
-        #mobileSidebar {
-            position: fixed;
-            top: 0;
-            right: -100%;
-            width: 80%;
-            max-width: 300px;
-            height: 100%;
-            background-color: #1a202c;
-            z-index: 2000;
-            transition: right 0.3s ease-in-out;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
-        }
-
-        #mobileSidebar.active {
-            right: 0;
-        }
-
-        #mobileSidebar a {
-            color: white;
-        }
-
-        #sidebarOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1500;
-            display: none;
-            backdrop-filter: blur(2px);
-        }
-
-        #sidebarOverlay.active {
-            display: block;
-        }
-
-        /* Scrollable Code Blocks */
-        pre {
-            background-color: #2d3748;
-            color: #e2e8f0;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            overflow-x: auto;
-            margin: 1.5rem 0;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-
-        .code-keyword {
-            color: #f687b3;
-        }
-
-        .code-string {
-            color: #68d391;
-        }
-
-        .code-comment {
-            color: #a0aec0;
-        }
-
-        .code-func {
-            color: #63b3ed;
-        }
-
-        /* Sections */
-        section {
-            padding: 5rem 1.5rem;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .hero-section {
-            padding-top: 8rem;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background-color: var(--accent);
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 9999px;
-            font-weight: 600;
-            transition: opacity 0.2s;
-            display: inline-block;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-
-        .card {
-            background-color: var(--secondary);
-            border-radius: 1rem;
-            padding: 2rem;
-            border: 1px solid #e5e7eb;
-        }
-
-        .doc-item {
-            margin-bottom: 4rem;
-            border-bottom: 1px solid var(--secondary);
-            padding-bottom: 2rem;
-        }
-
-        .api-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        footer {
-            background-color: var(--secondary);
-            padding: 4rem 1.5rem;
-            margin-top: 5rem;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 2rem;
-        }
-
-        .badge {
-            background: var(--primary);
-            color: white;
-            padding: 0.2rem 0.6rem;
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
             border-radius: 4px;
-            font-size: 0.75rem;
-            vertical-align: middle;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+        .code-container {
+            font-family: 'Courier New', Courier, monospace;
         }
     </style>
 </head>
+<body class="bg-white text-[#333333] font-sans selection:bg-primary-200 selection:text-primary-900 overflow-x-hidden antialiased">
 
-<body>
+<script>
+/**
+ * Qwery JS v2.0.0
+ * (c) 2026 Joseph Morukhuladi
+ * Licensed under MIT
+ */
+class Qwery {
+	constructor(config) {
+		this.configuration = {
+			name: config.name,
+			log: config.log ?? false,
+			storage: config.storage ?? localStorage
+		}
+		this._db = null
+	}
 
-    <!-- Navigation -->
-    <nav>
-        <div class="nav-container">
-            <div class="flex items-center gap-3">
-                <span class="brand-name">Qwery</span>
-                <span class="text-xs opacity-60">v1.0.0</span>
-            </div>
-            <div class="hidden md:flex gap-8 text-sm font-medium">
-                <a href="#home" class="hover:text-green-400 transition">Home</a>
-                <a href="#docs" class="hover:text-green-400 transition">Docs</a>
-                <a href="#functions" class="hover:text-green-400 transition">Functions</a>
-                <a href="https://github.com/Staviro/Qwery" target="_blank"
-                    class="hover:text-green-400 transition">GitHub</a>
-                <a href="https://iomushub.co.za/" target="_blank" class="hover:text-green-400 transition">Contact</a>
-            </div>
+	create() {
+		const key = this._qweryKey()
+		try {
+			const raw = this.configuration.storage.getItem(key)
+			if (raw === null) {
+				this._db = {
+					datasets: [],
+					createdDateTime: new Date().toISOString()
+				}
+				this._persist()
+				this._log("New Qwery storage created")
+			} else {
+				this._db = JSON.parse(raw)
+				this._log("Qwery storage loaded into memory")
+			}
+			return this
+		} catch (e) {
+			console.error("Qwery: Initialization failed", e);
+			this.configuration.storage.removeItem(key);
+			this._db = {
+				datasets: [],
+				createdDateTime: new Date().toISOString()
+			};
+			this._persist();
+			return this
+		}
+	}
+
+	_getDataset(name) {
+		if (!this._db) return null;
+		return this._db.datasets.find((x) => x.dataset === name)
+	}
+
+	json() {
+		return this._db
+	}
+
+	reset() {
+		this.configuration.storage.removeItem(this._qweryKey())
+		this._db = null
+		this._log("Storage reset and memory cleared")
+		return this
+	}
+
+	uuid() {
+		return crypto.randomUUID()
+	}
+
+	datasetExists(name) {
+		if (!this._db) return false
+		return this._db.datasets.some((x) => x.dataset === name)
+	}
+
+	_log(msg) {
+		if (this.configuration.log)
+			console.log(`Qwery [${this.configuration.name}]: ${msg}`)
+	}
+
+	_persist() {
+		try {
+			this.configuration.storage.setItem(this._qweryKey(), JSON.stringify(this._db))
+		} catch (e) {
+			console.error("Qwery: Persist to LocalStorage failed", e)
+		}
+	}
+
+	_qweryKey() {
+		return "qwery." + this.configuration.name
+	}
+
+	query(collection) {
+		if (!this._db)
+			throw new Error("Call create() before querying.");
+		return new QueryBuilder(this, collection);
+	}
+
+	truncate() {
+		if (!this._db) return
+		this._db.datasets.forEach((ds) => (ds.data = []))
+		this._persist()
+		this._log("Truncated all datasets")
+	}
+}
+
+class QueryBuilder {
+	constructor(qwery, collection) {
+		this._qwery = qwery;
+		this._collection = collection;
+		this._data = this._getCollection(collection);
+	}
+
+	_getCollection(collection) {
+		if (typeof collection === "string") {
+			const dataset = this._qwery._db.datasets.find(
+				x => x.dataset === collection
+			);
+			this._data = [...(dataset?.data ?? [])];
+			return this._data;
+		}
+		if (Array.isArray(collection)) {
+			this._data = [...collection];
+			return this._data;
+		}
+		return [];
+	}
+
+	where(func) {
+		this._data = this._data?.filter(func) ?? [];
+		return this;
+	}
+
+	find(func) {
+		return this._data.find(func) ?? null;
+	}
+
+	delete(func) {
+		const before = this._data.length;
+		this._data = this._data?.filter(x => !func(x)) ?? [];
+		const dataset = this._qwery._getDataset(this._collection);
+		if (dataset) {
+			dataset.data = this._data;
+		}
+		this._qwery._persist();
+		return {
+			affectedRows: before - this._data.length,
+			qwery: this._qwery
+		};
+	}
+
+	update(predicate, updatedData) {
+		let affected = 0;
+		this._data = this._data.map(item => {
+			if (!predicate(item))
+				return item;
+			affected++;
+			return {
+				...item,
+				...updatedData
+			};
+		});
+		const dataset = this._qwery._getDataset(this._collection);
+		if (dataset)
+			dataset.data = this._data;
+		this._qwery._persist();
+		return {
+			affectedRows: affected,
+			qwery: this._qwery
+		};
+	}
+
+	add(data) {
+		const dataset = this._qwery._getDataset(this._collection);
+		if (dataset) {
+			if (Array.isArray(data)) {
+				dataset.data.push(...data);
+			}
+			else {
+				dataset.data.push(data);
+			}
+		}
+		else {
+			this._qwery._db.datasets.push({
+				dataset: this._collection,
+				data: Array.isArray(data) ? data : [data]
+			});
+		}
+		const affected = Array.isArray(data)
+			? data.length
+			: 1;
+		this._qwery._persist();
+		return {
+			affectedRows: affected,
+			qwery: this._qwery
+		};
+	}
+
+	orderBy(selector) {
+		this._data.sort((a, b) => {
+			const left = selector(a);
+			const right = selector(b);
+			if (left < right) return -1;
+			if (left > right) return 1;
+			return 0;
+		});
+		return this;
+	}
+
+	orderByDesc(selector) {
+        this._data.sort((a, b) => {
+            const left = selector(a);
+            const right = selector(b);
+            if (left < right) return 1;
+            if (left > right) return -1;
+            return 0;
+        });
+        return this;
+    }
+
+	distinct(selector) {
+		const seen = new Set();
+		this._data = this._data.filter(item => {
+			const key = selector(item);
+			if (seen.has(key))
+				return false;
+			seen.add(key);
+			return true;
+		});
+		return this;
+	}
+
+	take(count) {
+		this._data = this._data.slice(0, count);
+		return this;
+	}
+
+	skip(count) {
+		this._data = this._data.slice(count);
+		return this;
+	}
+
+	page(page, pageSize) {
+		const start = (page - 1) * pageSize;
+		const end = start + pageSize;
+		this._data = this._data.slice(start, end);
+		return this;
+	}
+
+	select(func) {
+		this._data = this._data.map(func);
+		return this;
+	}
+
+	first() {
+		return this._data[0] ?? null;
+	}
+
+	last() {
+		return this._data[this._data.length - 1] ?? null;
+	}
+
+	get() {
+		return this._data;
+	}
+
+	count() {
+		return this._data.length;
+	}
+
+	any() {
+		return this._data.length > 0;
+	}
+
+	empty() {
+		return this._data.length === 0;
+	}
+
+	clear() {
+		this._data = [];
+		const dataset = this._qwery._getDataset(this._collection);
+		let count = 0;
+		if (dataset) {
+			count = dataset.data.length;
+			dataset.data = this._data;
+		}
+		this._qwery._persist();
+		return {
+			affectedRows: count,
+			qwery: this._qwery
+		};
+	}
+}
+</script>
+
+<header class="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md transition-all duration-300">
+    <div class="mx-auto flex max-w-7xl h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <!-- Logo and brand -->
+        <div class="flex items-center space-x-3">
+            <a href="#" class="flex items-center space-x-2.5">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z" />
+                    </svg>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-gray-900">Qwery<span class="text-primary">.js</span></span>
+            </a>
+            <span class="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-900 border border-primary-200">
+                v2.0.0
+            </span>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center space-x-8">
+            <a href="#why" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Why Qwery</a>
+            <a href="#features" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Features</a>
+            <a href="#quick-start" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Quick Start</a>
+            <a href="#crud-examples" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">CRUD</a>
+            <a href="#queries" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Query Engine</a>
+            <a href="#api" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">API Reference</a>
+        </nav>
+
+        <!-- Social Action and Menu Button -->
+        <div class="flex items-center space-x-3">
+            <a href="https://github.com/Staviro/Qwery" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center space-x-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 px-3.5 py-1.5 rounded-lg transition-all duration-200">
+                <svg class="h-4 w-4 fill-current" viewBox="0 0 16 16">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                </svg>
+                <span>GitHub</span>
+            </a>
             <!-- Mobile Menu Toggle -->
-            <button class="md:hidden text-white p-2" id="menuBtn" aria-label="Toggle Menu">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            <button id="mobile-menu-toggle" class="md:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none" aria-label="Toggle mobile menu">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
             </button>
         </div>
-    </nav>
+    </div>
 
-    <!-- Mobile Sidebar & Overlay -->
-    <div id="sidebarOverlay"></div>
-    <aside id="mobileSidebar">
-        <div class="flex justify-between items-center mb-6">
-            <span class="text-xl font-bold text-green-400">Menu</span>
-            <button id="closeSidebar" class="text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    <!-- Mobile Menu panel -->
+    <div id="mobile-menu" class="hidden border-b border-gray-100 bg-white md:hidden">
+        <div class="space-y-1 px-4 pb-4 pt-2">
+            <a href="#why" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary rounded-lg px-3 transition-colors">Why Qwery</a>
+            <a href="#features" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary rounded-lg px-3 transition-colors">Features</a>
+            <a href="#quick-start" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary rounded-lg px-3 transition-colors">Quick Start</a>
+            <a href="#crud-examples" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary rounded-lg px-3 transition-colors">CRUD Operations</a>
+            <a href="#queries" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary rounded-lg px-3 transition-colors">Query Engine</a>
+            <a href="#api" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary rounded-lg px-3 transition-colors">API Reference</a>
+            <a href="https://github.com/Staviro/Qwery" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary rounded-lg px-3 transition-colors">
+                <svg class="h-5 w-5 fill-current text-gray-700" viewBox="0 0 16 16">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
                 </svg>
-            </button>
+                <span>GitHub Repository</span>
+            </a>
         </div>
-        <a href="#home" class="mobile-link text-lg hover:text-green-400">Home</a>
-        <a href="#docs" class="mobile-link text-lg hover:text-green-400">Documentation</a>
-        <a href="#functions" class="mobile-link text-lg hover:text-green-400">Functions</a>
-        <hr class="border-gray-700">
-        <a href="https://github.com/Staviro/Qwery" target="_blank" class="text-lg hover:text-green-400">GitHub
-            Repository</a>
-        <a href="https://iomushub.co.za/" target="_blank" class="text-lg hover:text-green-400">Contact Hub</a>
-    </aside>
+    </div>
+</header>
 
-    <!-- Hero Section -->
-    <section id="home" class="hero-section">
-        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
-            Simple NoSQL storage for <span style="color: var(--primary)">Local Storage.</span>
-        </h1>
-        <p class="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-            A lightweight JavaScript library to add, get, and update JSON data in a structured way using a memory cache
-            with persistence.
-        </p>
-        <div class="flex gap-4 justify-center">
-            <a href="#docs" class="btn-primary">Get Started</a>
-            <a href="https://github.com/Staviro/Qwery"
-                class="bg-gray-100 px-8 py-3 rounded-full font-semibold border hover:bg-gray-200">GitHub</a>
+<main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 sm:pt-16 pb-20">
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        <!-- Text introduction -->
+        <div class="lg:col-span-7 flex flex-col justify-center space-y-6">
+            <div class="inline-flex items-center space-x-2 bg-primary-100 text-primary-900 border border-primary-200 px-3 py-1 rounded-full text-xs font-semibold w-fit">
+                <span class="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                <span>Zero dependency, fast-performing in-memory database</span>
+            </div>
+            
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
+                Lightweight JavaScript <br/>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Document Database</span>
+            </h1>
+            
+            <p class="text-lg sm:text-xl text-gray-600 max-w-2xl leading-relaxed">
+                Store, query and manage JSON documents using a fluent, callback-oriented query API with configurable, automatic storage persistence. Ideal for client-side applications, fast prototyping, and offlining data.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <a href="#quick-start" class="inline-flex items-center justify-center px-6 py-3.5 border border-transparent text-base font-semibold rounded-xl text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200">
+                    Get Started Now
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 ml-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    </svg>
+                </a>
+                <a href="#playground" class="inline-flex items-center justify-center px-6 py-3.5 border border-gray-200 text-base font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 shadow-sm transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2 text-accent">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
+                    </svg>
+                    Try Playground
+                </a>
+            </div>
+
+            <!-- Trust / Tech Stats Badges -->
+            <div class="pt-6 grid grid-cols-3 gap-4 border-t border-gray-100 max-w-lg">
+                <div>
+                    <span class="block text-2xl font-bold text-gray-900">0 KB</span>
+                    <span class="text-xs text-gray-500 font-medium">Zero Dependencies</span>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-gray-900">100%</span>
+                    <span class="text-xs text-gray-500 font-medium">Fluent Callbacks</span>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-gray-900">MIT</span>
+                    <span class="text-xs text-gray-500 font-medium">Open Source License</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Preview Editor Frame -->
+        <div class="lg:col-span-5 relative">
+            <div class="absolute -inset-1.5 rounded-3xl bg-gradient-to-r from-primary to-accent opacity-15 blur-lg"></div>
+            <div class="relative bg-neutral-950 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
+                <!-- MacOS Style Header -->
+                <div class="flex items-center justify-between px-4 py-3 bg-neutral-900 border-b border-gray-800">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                    </div>
+                    <span class="text-xs font-mono text-gray-400">app.js</span>
+                    <button class="copy-btn text-gray-500 hover:text-white transition-colors" data-code="hero-code" aria-label="Copy code">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-5 overflow-auto max-h-[360px] text-sm">
+                    <pre class="!bg-transparent !p-0"><code id="hero-code" class="language-javascript">const qwery = new Qwery({
+    name: "app"
+}).create();
+
+qwery
+    .query("users")
+    .add({
+        id: qwery.uuid(),
+        name: "John"
+    });
+
+const users = qwery
+    .query("users")
+    .where(x => x.name.startsWith("J"))
+    .orderBy(x => x.name)
+    .get();</code></pre>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Features -->
-    <section class="py-12">
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="card">
-                <h3 class="text-xl font-bold mb-3">Structured Data</h3>
-                <p class="text-gray-600">Manage your JSON objects using datasets, keeping your local storage organized
-                    and queryable.</p>
-            </div>
-            <div class="card">
-                <h3 class="text-xl font-bold mb-3">Memory Cache</h3>
-                <p class="text-gray-600">Utilizes internal memory for lightning-fast read operations before syncing to
-                    persistent storage.</p>
-            </div>
-            <div class="card">
-                <h3 class="text-xl font-bold mb-3">Async Ready</h3>
-                <p class="text-gray-600">Built for modern workflows with full Promise support and clean asynchronous
-                    APIs.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Documentation -->
-    <section id="docs">
-        <h2 class="text-3xl font-bold mb-12">Documentation</h2>
-
-        <div class="doc-item">
-            <h3 class="text-2xl font-bold mb-4">1. Initialize <span class="text-blue-500">create()</span></h3>
-            <p class="mb-4 text-gray-700">Initialize your Qwery instance. This sets up the initial store in LocalStorage
-                if it doesn't exist.</p>
-            <pre><code><span class="code-keyword">const</span> qwery = <span class="code-keyword">new</span> <span class="code-func">Qwery</span>({ name: <span class="code-string">"my_app_db"</span> }).<span class="code-func">create</span>();
-
-<span class="code-comment">// Output: The instance itself (chainable)</span></code></pre>
+    <section id="why" class="pt-24 scroll-mt-20">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Why developers choose Qwery.js</h2>
+            <p class="text-lg text-gray-600">
+                Direct browser APIs like LocalStorage require manual parsing, updating, and serialization overhead. Qwery acts as an in-memory document caching layers with transparent persistence.
+            </p>
         </div>
 
-        <div class="doc-item">
-            <h3 class="text-2xl font-bold mb-4">2. Add Data <span class="text-blue-500">add()</span></h3>
-            <p class="mb-4 text-gray-700">Push a new object into a specific dataset.</p>
-            <pre><code><span class="code-keyword">await</span> qwery.<span class="code-func">add</span>({
-    dataset: <span class="code-string">"users"</span>,
-    data: { id: <span class="code-string">"u1"</span>, name: <span class="code-string">"John Doe"</span>, email: <span class="code-string">"john@example.com"</span> }
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            <!-- Manual Pain Card -->
+            <div class="border border-red-100 bg-red-50/20 rounded-2xl p-6 sm:p-8 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3 text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <h3 class="text-lg font-bold text-gray-900">Manual Web Storage API Code</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Painful deserialization steps, string arrays to manage, filter callbacks done manually on non-cached entities. No direct sorting helpers.
+                    </p>
+                    <div class="bg-[#2D3139]/5 border border-black/5 rounded-xl p-4 overflow-x-auto">
+                        <pre class="text-xs font-mono text-red-800 leading-relaxed"><code>// High risk of data mutations, crashes on invalid JSON
+const raw = localStorage.getItem("app_users");
+let users = raw ? JSON.parse(raw) : [];
+
+// Complex update logic
+users = users.map(user => {
+    if (user.id === 1) {
+        return { ...user, active: true };
+    }
+    return user;
 });
 
-<span class="code-comment">// Output: Promise&lt;void&gt;</span></code></pre>
-        </div>
+// Ordering needs manually written comparative logic
+users.sort((a, b) => a.name.localeCompare(b.name));
 
-        <div class="doc-item">
-            <h3 class="text-2xl font-bold mb-4">3. Retrieve Data <span class="text-blue-500">get()</span></h3>
-            <p class="mb-4 text-gray-700">Fetch items based on a predicate function. Returns an array of matching
-                items.</p>
-            <pre><code><span class="code-keyword">const</span> user = <span class="code-keyword">await</span> qwery.<span class="code-func">get</span>({
-    dataset: <span class="code-string">"users"</span>,
-    predicate: (x) => x.id === <span class="code-string">"u1"</span>
-});
-
-<span class="code-comment">// Output: [{ id: "u1", name: "John Doe", ... }]</span></code></pre>
-        </div>
-
-        <div class="doc-item">
-            <h3 class="text-2xl font-bold mb-4">4. Update Data <span class="text-blue-500">update()</span></h3>
-            <p class="mb-4 text-gray-700">Merge new values into an existing record identified by a field/value pair.</p>
-            <pre><code><span class="code-keyword">await</span> qwery.<span class="code-func">update</span>({
-    dataset: <span class="code-string">"users"</span>,
-    field: <span class="code-string">"id"</span>,
-    value: <span class="code-string">"u1"</span>,
-    data: { name: <span class="code-string">"Johnny"</span> }
-});
-
-<span class="code-comment">// Output: Promise&lt;void&gt;</span></code></pre>
-        </div>
-
-        <div class="doc-item">
-            <h3 class="text-2xl font-bold mb-4">5. Remove Data <span class="text-blue-500">remove()</span></h3>
-            <p class="mb-4 text-gray-700">Delete an item from a dataset.</p>
-            <pre><code><span class="code-keyword">await</span> qwery.<span class="code-func">remove</span>({
-    dataset: <span class="code-string">"users"</span>,
-    predicate: (x) => x.id === <span class="code-string">"u1"</span>
-});</code></pre>
-        </div>
-
-        <div class="doc-item">
-            <h3 class="text-2xl font-bold mb-4">6. List Datasets <span class="text-blue-500">listDatasets()</span></h3>
-            <p class="mb-4 text-gray-700">Get an array of all available dataset names in the instance.</p>
-            <pre><code><span class="code-keyword">const</span> sets = qwery.<span class="code-func">listDatasets</span>();
-<span class="code-comment">// Output: ["users", "settings", "posts"]</span></code></pre>
-        </div>
-    </section>
-
-    <!-- Functions API Reference -->
-    <section id="functions" class="bg-gray-50 rounded-3xl mb-12">
-        <h2 class="text-3xl font-bold mb-4">API Reference</h2>
-        <p class="text-gray-600 mb-12">A complete list of methods available on the Qwery instance.</p>
-
-        <div class="api-grid">
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <code class="text-blue-600 font-bold">uuid()</code>
-                <p class="text-sm mt-2 text-gray-600">Generates a standard v4 UUID for unique record IDs.</p>
+localStorage.setItem("app_users", JSON.stringify(users));</code></pre>
+                    </div>
+                </div>
+                <div class="mt-6 border-t border-red-100/60 pt-4 text-xs text-red-600 flex items-center space-x-2">
+                    <span>⚠️ Manual parsing overhead</span>
+                    <span>• No transactional in-memory speed</span>
+                </div>
             </div>
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <code class="text-blue-600 font-bold">count(dataset)</code>
-                <p class="text-sm mt-2 text-gray-600">Returns the number of items in a specified dataset.</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <code class="text-blue-600 font-bold">has(properties)</code>
-                <p class="text-sm mt-2 text-gray-600">Checks if a specific value exists in a dataset using a predicate.
-                    Returns
-                    boolean.</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <code class="text-blue-600 font-bold">truncate()</code>
-                <p class="text-sm mt-2 text-gray-600">Clears all datasets but preserves the database structure.</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <code class="text-blue-600 font-bold">reset()</code>
-                <p class="text-sm mt-2 text-gray-600">Deletes the database from LocalStorage entirely.</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <code class="text-blue-600 font-bold">json()</code>
-                <p class="text-sm mt-2 text-gray-600">Returns the raw object state of the entire database.</p>
+
+            <!-- Qwery Joy Card -->
+            <div class="border border-primary-200 bg-primary-50/20 rounded-2xl p-6 sm:p-8 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3 text-primary-900">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-primary">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <h3 class="text-lg font-bold text-gray-900">With Qwery.js</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Elegant declarative API with immediate in-memory responses. Persistent operations write back automatically with built-in cache synchronization.
+                    </p>
+                    <div class="bg-neutral-950 rounded-xl p-4 overflow-x-auto border border-gray-800">
+                        <pre class="text-xs font-mono text-green-400 leading-relaxed"><code>// Seamless update and state execution
+qwery
+    .query("users")
+    .update(x => x.id === 1, { active: true });
+
+// Highly chainable sorting and selection 
+const activeUsers = qwery
+    .query("users")
+    .where(x => x.active === true)
+    .orderBy(x => x.name)
+    .get();</code></pre>
+                    </div>
+                </div>
+                <div class="mt-6 border-t border-primary-100 pt-4 text-xs text-primary-900 flex items-center space-x-2">
+                    <span>✨ In-memory acceleration</span>
+                    <span>• Auto persistence</span>
+                    <span>• Chainable actions</span>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <div class="max-w-xs">
-                <span class="brand-name">Qwery</span>
-                <p class="mt-4 text-gray-500 text-sm">
-                    Empowering developers with simple, local storage management. Built for speed and simplicity.
+    <section id="features" class="pt-24 scroll-mt-20">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-sm font-bold text-primary tracking-wider uppercase">Extremely Capable</span>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Feature Overview</h2>
+            <p class="text-lg text-gray-600">
+                Fully equipped to handle fast prototyping or reliable client-side client data architectures.
+            </p>
+        </div>
+
+        <div class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Fluent Query Builder -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Fluent Query Builder</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    Write high level query statements using pure ES6 callback functions instead of cryptic custom strings or mock SQL.
                 </p>
             </div>
-            <div>
-                <h4 class="font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Resources</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="https://github.com/Staviro/Qwery" class="hover:text-blue-500">GitHub Repo</a></li>
-                    <li><a href="https://iomushub.co.za/" class="hover:text-blue-500">Iomus Hub</a></li>
-                    <li><a href="#docs" class="hover:text-blue-500">Documentation</a></li>
-                </ul>
+
+            <!-- Configurable Storage -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0v3.75" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Flexible Storage</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    Seamlessly toggle storage backends. Target <code class="bg-gray-100 px-1 py-0.5 rounded text-xs">localStorage</code>, <code class="bg-gray-100 px-1 py-0.5 rounded text-xs">sessionStorage</code>, or customize.
+                </p>
             </div>
-            <div>
-                <h4 class="font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Company</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="https://iomushub.co.za/" class="hover:text-blue-500">Contact Us</a></li>
-                </ul>
+
+            <!-- Memory Cache -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m-4.179 0 4.179 2.25m-4.179 0 4.179 2.25m4.179-6.75 4.179 2.25m-4.179 0 4.179 2.25m-4.179 0 4.179 2.25m4.179-6.75 4.179 2.25m-4.179 0 4.179 2.25m-4.179 0 4.179 2.25m4.179-6.75 4.179 2.25m-4.179 0 4.179 2.25m-4.179 0 4.179 2.25M12 21.75V12" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Memory Cache</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    Queries read straight from an optimized active memory copy of your JSON store, preventing expensive physical read cycles.
+                </p>
+            </div>
+
+            <!-- Complete CRUD -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">CRUD Operations</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    Add records, query collections, bulk update matching models, slice lists, or selectively purge data arrays safely.
+                </p>
+            </div>
+
+            <!-- Zero Dependencies -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Zero Dependencies</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    No bloat, no complex node package dependency tree warnings. Copy a single script reference into any workspace.
+                </p>
+            </div>
+
+            <!-- Fast Performance -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Fast Performance</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    Because data operations happen in-memory first, read steps perform virtually instantly. Write cycles persist asynchronously.
+                </p>
+            </div>
+
+            <!-- MIT Licensed -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.375M9 9h3.75M16.5 12A4.5 4.5 0 1112 7.5h1.5m3 4.5a4.5 4.5 0 01-4.5 4.5H12" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">MIT Licensed</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    Completely free for commercial and personal open-source projects. Maintain full ownership of your data code configurations.
+                </p>
+            </div>
+
+            <!-- Chainable API -->
+            <div class="border border-gray-100 hover:border-primary-200 hover:shadow-lg rounded-2xl p-6 transition-all duration-300 bg-white">
+                <div class="p-3 bg-primary-100 rounded-xl text-primary-900 w-fit mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Chainable API</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">
+                    Chain operations like filtering, sorting, skipping, and mapping gracefully into sleek, highly readable single-expression calls.
+                </p>
             </div>
         </div>
-        <div class="max-w-6xl mx-auto mt-16 pt-8 border-t border-gray-200 text-center text-gray-400 text-sm">
-            &copy; <span id="year"></span> Qwery.js - Licensed under MIT. Distributed by Iomus Hub.
+    </section>
+
+    <section id="playground" class="pt-24 scroll-mt-20">
+        <div class="bg-slate-50 border border-gray-200 rounded-2xl p-6 sm:p-10 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-72 h-72">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
+                </svg>
+            </div>
+            
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="inline-flex items-center space-x-2 bg-primary/10 text-primary-dark px-3 py-1 rounded-full text-xs font-semibold">
+                        <span>Interactive Playground</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Try Qwery.js Live</h2>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Modify this real Javascript snippet on the right. Hit **"Run Query"** to execute it against the fully loaded in-browser database!
+                    </p>
+                    <div class="p-4 bg-white border border-gray-200 rounded-xl space-y-3">
+                        <div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Available mock data schema:</div>
+                        <div class="grid grid-cols-2 gap-2 text-xs font-mono text-gray-600">
+                            <div>• id (number)</div>
+                            <div>• name (string)</div>
+                            <div>• age (number)</div>
+                            <div>• role (string)</div>
+                        </div>
+                    </div>
+                    <button id="run-playground" class="w-full flex items-center justify-center space-x-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z" />
+                        </svg>
+                        <span>Run Query Expression</span>
+                    </button>
+                </div>
+
+                <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Input Code Container -->
+                    <div class="flex flex-col space-y-2">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Playground Input (Editable)</label>
+                        <div class="relative bg-neutral-950 border border-gray-800 rounded-xl overflow-hidden shadow-xl flex-1 flex flex-col">
+                            <textarea id="playground-code" class="w-full h-72 sm:h-96 p-4 bg-transparent text-green-400 font-mono text-xs focus:outline-none resize-none leading-relaxed" spellcheck="false">// Try changing age or name startsWith parameter below!
+const db = new Qwery({ 
+    name: "demo_db", 
+    storage: sessionStorage 
+}).create();
+
+db.query("members").clear();
+db.query("members").add([
+    { id: 1, name: "Alice", age: 28, role: "Admin" },
+    { id: 2, name: "Bob", age: 34, role: "User" },
+    { id: 3, name: "Charlie", age: 22, role: "User" },
+    { id: 4, name: "Diana", age: 31, role: "Admin" }
+]);
+
+const result = db.query("members")
+    .where(x => x.age > 25)
+    .orderBy(x => x.age)
+    .get();
+
+return result;</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Output Console Container -->
+                    <div class="flex flex-col space-y-2">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Output Result</label>
+                        <div class="bg-neutral-950 border border-gray-800 rounded-xl overflow-auto h-72 sm:h-96 shadow-xl p-4">
+                            <pre class="text-xs font-mono text-gray-300" id="playground-output">Click "Run Query Expression" to see current database cache state...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </footer>
+    </section>
 
-    <script>
-        // Set Current Year
-        document.getElementById('year').textContent = new Date().getFullYear();
+    <section id="quick-start" class="pt-24 scroll-mt-20 space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-sm font-bold text-primary tracking-wider uppercase">Setup Guide</span>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Quick Start Setup</h2>
+            <p class="text-lg text-gray-600">
+                Integrate Qwery.js into your web workflow in seconds without complex compilers, transpilers, or setups.
+            </p>
+        </div>
 
-        // Mobile Sidebar Logic
-        const menuBtn = document.getElementById('menuBtn');
-        const closeSidebar = document.getElementById('closeSidebar');
-        const mobileSidebar = document.getElementById('mobileSidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const mobileLinks = document.querySelectorAll('.mobile-link');
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- step 1 -->
+            <div class="border border-gray-100 rounded-2xl p-6 bg-white shadow-sm flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-widest text-primary">Step 1</span>
+                        <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-900 font-bold flex items-center justify-center text-sm">1</div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Include Library</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        Add the lightweight script directly into your client HTML page.
+                    </p>
+                </div>
+                <div class="mt-6 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="step1-code">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="step1-code" class="language-html">&lt;script src="qwery.js"&gt;&lt;/script&gt;</code></pre>
+                </div>
+            </div>
 
-        function toggleSidebar(state) {
-            if (state) {
-                mobileSidebar.classList.add('active');
-                sidebarOverlay.classList.add('active');
-                document.body.style.overflow = 'hidden'; // Prevent scroll
-            } else {
-                mobileSidebar.classList.remove('active');
-                sidebarOverlay.classList.remove('active');
-                document.body.style.overflow = '';
+            <!-- step 2 -->
+            <div class="border border-gray-100 rounded-2xl p-6 bg-white shadow-sm flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-widest text-primary">Step 2</span>
+                        <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-900 font-bold flex items-center justify-center text-sm">2</div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Initialization</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        Instantiate your workspace storage, enable tracking logs to debug faster.
+                    </p>
+                </div>
+                <div class="mt-6 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="step2-code">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="step2-code" class="language-javascript">const qwery = new Qwery({
+    name: "app",
+    log: true
+}).create();</code></pre>
+                </div>
+            </div>
+
+            <!-- step 3 -->
+            <div class="border border-gray-100 rounded-2xl p-6 bg-white shadow-sm flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-widest text-primary">Step 3</span>
+                        <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-900 font-bold flex items-center justify-center text-sm">3</div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Custom Storage Backend</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        Optionally route to Session Storage instead of default local persistence.
+                    </p>
+                </div>
+                <div class="mt-6 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="step3-code">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="step3-code" class="language-javascript">const qwery = new Qwery({
+    name: "session",
+    storage: sessionStorage
+}).create();</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="crud-examples" class="pt-24 scroll-mt-20 space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-sm font-bold text-primary tracking-wider uppercase">Database CRUD Operations</span>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Data Mutation Operations</h2>
+            <p class="text-lg text-gray-600">
+                Review complete operational signatures for adding, retrieving, modifying, and flushing datasets.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- CRUD: ADD -->
+            <div class="border border-gray-100 rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="px-2 py-0.5 bg-green-100 text-green-950 font-bold text-xs rounded-md">CREATE</span>
+                        <h3 class="text-lg font-bold text-gray-900">Add Documents</h3>
+                    </div>
+                    <p class="text-sm text-gray-500">Insert single objects or datasets arrays into a target collection cache space.</p>
+                </div>
+                <div class="mt-4 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="crud-add">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="crud-add" class="language-javascript">qwery
+  .query("users")
+  .add({
+    id: qwery.uuid(),
+    name: "John"
+  });</code></pre>
+                </div>
+            </div>
+
+            <!-- CRUD: FIND -->
+            <div class="border border-gray-100 rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="px-2 py-0.5 bg-blue-100 text-blue-950 font-bold text-xs rounded-md">READ ONE</span>
+                        <h3 class="text-lg font-bold text-gray-900">Find Document</h3>
+                    </div>
+                    <p class="text-sm text-gray-500">Locate the first single document matching callback parameters.</p>
+                </div>
+                <div class="mt-4 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="crud-find">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="crud-find" class="language-javascript">const user = qwery
+  .query("users")
+  .find(x => x.id === 1);</code></pre>
+                </div>
+            </div>
+
+            <!-- CRUD: WHERE -->
+            <div class="border border-gray-100 rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="px-2 py-0.5 bg-indigo-100 text-indigo-950 font-bold text-xs rounded-md">READ ALL</span>
+                        <h3 class="text-lg font-bold text-gray-900">Query Filter</h3>
+                    </div>
+                    <p class="text-sm text-gray-500">Query multiple documents satisfying evaluation conditions.</p>
+                </div>
+                <div class="mt-4 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="crud-where">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="crud-where" class="language-javascript">const users = qwery
+  .query("users")
+  .where(x => x.age > 18)
+  .get();</code></pre>
+                </div>
+            </div>
+
+            <!-- CRUD: UPDATE -->
+            <div class="border border-gray-100 rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="px-2 py-0.5 bg-yellow-100 text-yellow-950 font-bold text-xs rounded-md">UPDATE</span>
+                        <h3 class="text-lg font-bold text-gray-900">Update Document</h3>
+                    </div>
+                    <p class="text-sm text-gray-500">Target records dynamically, merging properties via callback execution.</p>
+                </div>
+                <div class="mt-4 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="crud-update">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="crud-update" class="language-javascript">qwery
+  .query("users")
+  .update(
+    x => x.id === 1,
+    { active: true }
+  );</code></pre>
+                </div>
+            </div>
+
+            <!-- CRUD: DELETE -->
+            <div class="border border-gray-100 rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="px-2 py-0.5 bg-red-100 text-red-950 font-bold text-xs rounded-md">DELETE</span>
+                        <h3 class="text-lg font-bold text-gray-900">Delete Documents</h3>
+                    </div>
+                    <p class="text-sm text-gray-500">Remove matching elements, instantly updating local or session targets.</p>
+                </div>
+                <div class="mt-4 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="crud-delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="crud-delete" class="language-javascript">qwery
+  .query("users")
+  .delete(x => x.age < 18);</code></pre>
+                </div>
+            </div>
+
+            <!-- CRUD: CLEAR -->
+            <div class="border border-gray-100 rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="px-2 py-0.5 bg-gray-100 text-gray-950 font-bold text-xs rounded-md">TRUNCATE</span>
+                        <h3 class="text-lg font-bold text-gray-900">Clear collection</h3>
+                    </div>
+                    <p class="text-sm text-gray-500">Purge entire dataset target contents while leaving storage instance keys safe.</p>
+                </div>
+                <div class="mt-4 bg-neutral-950 rounded-xl p-4 overflow-x-auto relative">
+                    <button class="copy-btn absolute top-2 right-2 text-gray-500 hover:text-white transition-colors" data-code="crud-clear">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                    <pre class="!bg-transparent !p-0"><code id="crud-clear" class="language-javascript">qwery
+  .query("users")
+  .clear();</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="queries" class="pt-24 scroll-mt-20 space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-sm font-bold text-primary tracking-wider uppercase">Query Methods</span>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Fluent API Features</h2>
+            <p class="text-lg text-gray-600">
+                Explore every chainable helper method provided to filter, sort, slice, and verify JSON records.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- where() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">where()</h3>
+                    <span class="text-xs font-mono text-gray-500">Filter list</span>
+                </div>
+                <p class="text-xs text-gray-600">Filters collection array items matches based on evaluation functions.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.where(x => x.age > 21)</code></pre>
+                </div>
+            </div>
+
+            <!-- orderBy() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">orderBy()</h3>
+                    <span class="text-xs font-mono text-gray-500">Sort Asc</span>
+                </div>
+                <p class="text-xs text-gray-600">Orders collection documents in ascending manner based on keys.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.orderBy(x => x.lastName)</code></pre>
+                </div>
+            </div>
+
+            <!-- orderByDesc() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">orderByDesc()</h3>
+                    <span class="text-xs font-mono text-gray-500">Sort Desc</span>
+                </div>
+                <p class="text-xs text-gray-600">Orders collection documents in descending manner based on keys.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.orderByDesc(x => x.age)</code></pre>
+                </div>
+            </div>
+
+            <!-- distinct() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">distinct()</h3>
+                    <span class="text-xs font-mono text-gray-500">De-duplicate</span>
+                </div>
+                <p class="text-xs text-gray-600">Filters out records that return duplicate values on target selector criteria.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.distinct(x => x.city)</code></pre>
+                </div>
+            </div>
+
+            <!-- select() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">select()</h3>
+                    <span class="text-xs font-mono text-gray-500">Projection</span>
+                </div>
+                <p class="text-xs text-gray-600">Maps fields, selecting only specific properties from parent entities.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.select(x => ({ name: x.name }))</code></pre>
+                </div>
+            </div>
+
+            <!-- page() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">page()</h3>
+                    <span class="text-xs font-mono text-gray-500">Pagination</span>
+                </div>
+                <p class="text-xs text-gray-600">Slices lists smoothly based on page counts and page sizing inputs.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.page(1, 10)</code></pre>
+                </div>
+            </div>
+
+            <!-- skip() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">skip()</h3>
+                    <span class="text-xs font-mono text-gray-500">Skip index</span>
+                </div>
+                <p class="text-xs text-gray-600">Bypasses targeted counts of elements starting at the beginning.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.skip(5)</code></pre>
+                </div>
+            </div>
+
+            <!-- take() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">take()</h3>
+                    <span class="text-xs font-mono text-gray-500">Limit size</span>
+                </div>
+                <p class="text-xs text-gray-600">Trims out results array leaving only targeted length of documents.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.take(3)</code></pre>
+                </div>
+            </div>
+
+            <!-- first() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">first()</h3>
+                    <span class="text-xs font-mono text-gray-500">First object</span>
+                </div>
+                <p class="text-xs text-gray-600">Returns first collection entity, defaulting to null if array is empty.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.first()</code></pre>
+                </div>
+            </div>
+
+            <!-- last() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">last()</h3>
+                    <span class="text-xs font-mono text-gray-500">Last object</span>
+                </div>
+                <p class="text-xs text-gray-600">Returns last collection entity, defaulting to null if array is empty.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.last()</code></pre>
+                </div>
+            </div>
+
+            <!-- count() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">count()</h3>
+                    <span class="text-xs font-mono text-gray-500">Integer size</span>
+                </div>
+                <p class="text-xs text-gray-600">Returns length of the dataset array calculated instantly.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.count()</code></pre>
+                </div>
+            </div>
+
+            <!-- any() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">any()</h3>
+                    <span class="text-xs font-mono text-gray-500">Exist check</span>
+                </div>
+                <p class="text-xs text-gray-600">Returns boolean stating if query array has any entities inside.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.any()</code></pre>
+                </div>
+            </div>
+
+            <!-- empty() -->
+            <div class="border border-gray-100 rounded-xl p-5 bg-white space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">empty()</h3>
+                    <span class="text-xs font-mono text-gray-500">Boolean check</span>
+                </div>
+                <p class="text-xs text-gray-600">Returns true if dataset length equals zero, otherwise false.</p>
+                <div class="bg-neutral-950 p-3.5 rounded-lg overflow-x-auto">
+                    <pre class="text-xs font-mono text-green-400"><code>query("users")
+.empty()</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="storage-providers" class="pt-24 scroll-mt-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-6 space-y-6">
+            <span class="text-sm font-bold text-primary tracking-wider uppercase">Storage Backends</span>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Storage Provider Support</h2>
+            <p class="text-lg text-gray-600 leading-relaxed">
+                Qwery.js automatically syncs data out of local cache arrays straight back into persistence engines. Swap storage platforms at configuration init using default engines or build custom storage wrappers.
+            </p>
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3">
+                    <div class="p-1.5 bg-primary-100 rounded-lg text-primary-900 mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900">localStorage (Default)</h4>
+                        <p class="text-sm text-gray-500">Persistent across tab lifespans and device power restarts.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="p-1.5 bg-primary-100 rounded-lg text-primary-900 mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900">sessionStorage</h4>
+                        <p class="text-sm text-gray-500">Ideal for session data. Automatic flush once the user closes the page.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="p-1.5 bg-primary-100 rounded-lg text-primary-900 mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900">Custom Storage Adapter</h4>
+                        <p class="text-sm text-gray-500">Any plain object providing: <code class="text-xs bg-gray-100 px-1 py-0.5 rounded">getItem()</code>, <code class="text-xs bg-gray-100 px-1 py-0.5 rounded">setItem()</code>, <code class="text-xs bg-gray-100 px-1 py-0.5 rounded">removeItem()</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-6">
+            <div class="relative bg-neutral-950 rounded-2xl shadow-xl border border-gray-800 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-3 bg-neutral-900 border-b border-gray-800">
+                    <span class="text-xs font-mono text-gray-400">customAdapter.js</span>
+                    <button class="copy-btn text-gray-500 hover:text-white transition-colors" data-code="custom-adapter">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H5.4M9 2.25H12a2.25 2.25 0 0 1 2.25 2.25V9m3 3H21a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-3.375M9 15h2.25M9 15a2.25 2.25 0 1 1-4.5 0M9 15V1.875A1.125 1.125 0 0 1 10.125.75h4.125c.621 0 1.125.504 1.125 1.125V3.75M9 4.5h4.5" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-5 text-sm overflow-x-auto">
+                    <pre class="!bg-transparent !p-0"><code id="custom-adapter" class="language-javascript">// Implement custom mock storage provider interface
+const myAdapter = {
+    getItem: (key) => sessionStorage.getItem(key),
+    setItem: (key, val) => sessionStorage.setItem(key, val),
+    removeItem: (key) => sessionStorage.removeItem(key)
+};
+
+// Pass it safely at construction phase
+const db = new Qwery({
+    name: "secure_workspace",
+    storage: myAdapter
+}).create();</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="api" class="pt-24 scroll-mt-20 space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-sm font-bold text-primary tracking-wider uppercase">Specification Docs</span>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">API System Reference</h2>
+            <p class="text-lg text-gray-600">
+                Detailed technical documentation representing all core classes, method interfaces, parameter definitions, and returns.
+            </p>
+        </div>
+
+        <div class="space-y-12">
+            <!-- Qwery Class Reference -->
+            <div class="border border-gray-100 rounded-2xl p-6 sm:p-8 bg-white shadow-sm space-y-6">
+                <div class="border-b border-gray-100 pb-4">
+                    <h3 class="text-2xl font-bold text-gray-900">Class: <span class="text-primary">Qwery</span></h3>
+                    <p class="text-sm text-gray-500 mt-1">Primary engine coordinator managing global workspaces, JSON mapping, and cache structures.</p>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-gray-400 font-bold uppercase tracking-wider text-xs">
+                                <th class="pb-3 pr-4">Method Name</th>
+                                <th class="pb-3 px-4">Parameters</th>
+                                <th class="pb-3 px-4">Return Type</th>
+                                <th class="pb-3 pl-4">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-700">
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-primary-dark">create()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Qwery</span></td>
+                                <td class="py-4 pl-4 text-xs">Primes physical memory caches, deserializing data back-ends or initializes key stores.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-primary-dark">query(collection)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">collection: string|array</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Initializes and returns a fluent QueryBuilder query channel for dataset array items.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-primary-dark">json()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object</span></td>
+                                <td class="py-4 pl-4 text-xs">Exports complete internal in-memory schema states, dataset matrices, metadata logs.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-primary-dark">truncate()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">void</span></td>
+                                <td class="py-4 pl-4 text-xs">Clears all dataset record entities, saving clean state representations back to storage keys.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-primary-dark">reset()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Qwery</span></td>
+                                <td class="py-4 pl-4 text-xs">Destroys database storage backend keys and uninstantiates current system values.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-primary-dark">uuid()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">string</span></td>
+                                <td class="py-4 pl-4 text-xs">Utility method returning secure, unique cryptographic V4 string UUID values.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-primary-dark">datasetExists(name)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">name: string</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">boolean</span></td>
+                                <td class="py-4 pl-4 text-xs">Returns boolean verifying if target collection dataset schemas exist currently.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- QueryBuilder Class Reference -->
+            <div class="border border-gray-100 rounded-2xl p-6 sm:p-8 bg-white shadow-sm space-y-6">
+                <div class="border-b border-gray-100 pb-4">
+                    <h3 class="text-2xl font-bold text-gray-900">Class: <span class="text-accent">QueryBuilder</span></h3>
+                    <p class="text-sm text-gray-500 mt-1">Dynamic wrapper coordinating callback processing loops, arrays, indexes, and mutations.</p>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-gray-400 font-bold uppercase tracking-wider text-xs">
+                                <th class="pb-3 pr-4">Method Name</th>
+                                <th class="pb-3 px-4">Parameters</th>
+                                <th class="pb-3 px-4">Return Type</th>
+                                <th class="pb-3 pl-4">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-700">
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">add(data)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">data: Object|Array</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object</span></td>
+                                <td class="py-4 pl-4 text-xs">Inserts records, saves changes. Returns <code class="text-xs">{ affectedRows: number, qwery: Qwery }</code>.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">where(predicate)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">predicate: Function</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Filters dataset workspace arrays based on validation query expressions.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">find(predicate)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">predicate: Function</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object|null</span></td>
+                                <td class="py-4 pl-4 text-xs">Returns the first item matching predicate expression or returns null.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">update(predicate, rawData)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">predicate: Function, rawData: Object</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object</span></td>
+                                <td class="py-4 pl-4 text-xs">Mutates target items, saves storage. Returns <code class="text-xs">{ affectedRows: number, qwery: Qwery }</code>.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">delete(predicate)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">predicate: Function</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object</span></td>
+                                <td class="py-4 pl-4 text-xs">Deletes matching records. Returns <code class="text-xs">{ affectedRows: number, qwery: Qwery }</code>.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">clear()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object</span></td>
+                                <td class="py-4 pl-4 text-xs">Purges collection, triggers save sync. Returns <code class="text-xs">{ affectedRows: number, qwery: Qwery }</code>.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">orderBy(selector)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">selector: Function</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Sorts query arrays in ascending direction using returned comparator properties.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">orderByDesc(selector)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">selector: Function</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Sorts query arrays in descending direction using returned comparator properties.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">distinct(selector)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">selector: Function</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Filters out any records with matching duplicate values on selector attributes.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">select(func)</td>
+                                class="py-4 px-4 font-mono text-xs text-gray-500">func: Function</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Performs inline javascript array maps to project fields to custom shapes.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">page(page, pageSize)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">page: number, pageSize: number</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Extracts pagination arrays smoothly from selected query lists.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">take(count)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">count: number</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Trims workspace lists keeping targeted maximum element numbers.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">skip(count)</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">count: number</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">QueryBuilder</span></td>
+                                <td class="py-4 pl-4 text-xs">Slices datasets skipping first targeted integer count of elements.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">first()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object|null</span></td>
+                                <td class="py-4 pl-4 text-xs">Extracts first array item, returning null if workspace contains no records.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">last()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Object|null</span></td>
+                                <td class="py-4 pl-4 text-xs">Extracts last array item, returning null if workspace contains no records.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">count()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">number</span></td>
+                                <td class="py-4 pl-4 text-xs">Calculates and yields current query array count value instantly.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">any()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">boolean</span></td>
+                                <td class="py-4 pl-4 text-xs">Verifies dataset state is populated. Returns true if count > 0.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">empty()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">boolean</span></td>
+                                <td class="py-4 pl-4 text-xs">Verifies dataset states is empty. Returns true if count === 0.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 pr-4 font-mono font-bold text-accent-dark">get()</td>
+                                <td class="py-4 px-4 font-mono text-xs text-gray-500">-</td>
+                                <td class="py-4 px-4"><span class="px-2 py-0.5 bg-gray-100 font-mono text-xs rounded text-gray-600">Array</span></td>
+                                <td class="py-4 pl-4 text-xs">Materializes processing arrays, returning clean Javascript arrays of target matches.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="border-t border-gray-100 bg-gray-50/50 py-12 mt-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row items-center justify-between space-y-6 sm:space-y-0">
+            <!-- Brand Info -->
+            <div class="flex items-center space-x-3">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z" />
+                    </svg>
+                </div>
+                <span class="text-sm font-bold text-gray-900">Qwery.js</span>
+                <span class="text-xs text-gray-400">© 2026 Joseph Morukhuladi. All rights reserved.</span>
+            </div>
+
+            <!-- Licensing/GitHub Link -->
+            <div class="flex items-center space-x-6 text-xs text-gray-500 font-medium">
+                <span>Distributed under MIT License</span>
+                <a href="https://github.com/Staviro/Qwery" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors flex items-center space-x-1">
+                    <svg class="h-4 w-4 fill-current text-gray-700" viewBox="0 0 16 16">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    <span>View on GitHub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Copy code block to clipboard implementation
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const codeId = btn.getAttribute('data-code');
+            const codeElement = document.getElementById(codeId);
+            if (!codeElement) return;
+
+            // Handle clean fallback code copy-to-clipboard mechanism
+            const textArea = document.createElement('textarea');
+            textArea.value = codeElement.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                // Temporary visual success status
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#79AE6F" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                    </svg>
+                `;
+                setTimeout(() => {
+                    btn.innerHTML = originalContent;
+                }, 2000);
+            } catch (err) {
+                console.error('Copying failed: ', err);
             }
+            document.body.removeChild(textArea);
+        });
+    });
+
+    // Mobile navigation state logic controls
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    toggleBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // Auto-close mobile menu when an anchor link is selected
+    mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+        });
+    });
+
+    // Live Playground Sandboxed Evaluation logic
+    const runPlaygroundBtn = document.getElementById('run-playground');
+    const codeArea = document.getElementById('playground-code');
+    const consoleOutput = document.getElementById('playground-output');
+
+    runPlaygroundBtn.addEventListener('click', () => {
+        const rawCodeText = codeArea.value;
+        consoleOutput.textContent = "Processing and executing database statements...";
+        
+        try {
+            // Evaluates code inside scope context of the loaded Qwery instance
+            const executeEnvironment = new Function('Qwery', rawCodeText);
+            const evaluationResult = executeEnvironment(Qwery);
+            
+            // Format output elegantly inside output console frame
+            consoleOutput.textContent = JSON.stringify(evaluationResult, null, 4);
+        } catch (error) {
+            consoleOutput.textContent = `❌ Execution Error:\n\n${error.message}`;
         }
+    });
 
-        menuBtn.addEventListener('click', () => toggleSidebar(true));
-        closeSidebar.addEventListener('click', () => toggleSidebar(false));
-        sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
-
-        mobileLinks.forEach(link => {
-            link.addEventListener('click', () => toggleSidebar(false));
-        });
-
-        // Smooth scroll adjustment for fixed header
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const href = this.getAttribute('href');
-                if (href === "#") return;
-
-                e.preventDefault();
-                const target = document.querySelector(href);
-                if (target) {
-                    window.scrollTo({
-                        top: target.offsetTop - 80,
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-    </script>
+    // Execute first initial evaluation of playground on load
+    window.addEventListener('load', () => {
+        if (runPlaygroundBtn) {
+            runPlaygroundBtn.click();
+        }
+    });
+</script>
 </body>
-
 </html>

@@ -1,97 +1,397 @@
 # Qwery.js
 
-Qwery.js is a JavaScript library that allows a developer to add, get and update JSON data in a structured way on local storage. Qwery.js was built to be a simple NoSQL storage system for developers to use. It utilizes a memory cache to manage data operations and persists the state to LocalStorage.
+Qwery.js is a lightweight JavaScript document database with a fluent query API and configurable storage providers.
+
+It provides a simple way to store, query, and manage JSON documents using an in-memory cache for fast operations while automatically persisting changes to a storage provider such as `localStorage` or `sessionStorage`.
+
+Qwery was designed to feel familiar to JavaScript developers by embracing callback-based querying rather than SQL-like syntax.
+
+> **Note:** Qwery is intended for client-side application data. Do not store sensitive or confidential user information.
+
+---
+
+## Features
+
+- Lightweight with zero dependencies
+- Fluent, chainable query API
+- In-memory caching for improved performance
+- Automatic persistence to a configurable storage provider
+- Supports `localStorage`, `sessionStorage`, or custom storage adapters
+- Automatic dataset creation
+- CRUD operations
+- Ordering, filtering, paging, projections, and distinct queries
+- MIT Licensed
 
 ---
 
 ## Information
 
-- Author: Joseph Morukhuladi
-- License: MIT
-- Year: 2026
-
-Note: Do not use qwery.js to store sensitive user information.
+| Property | Value |
+|----------|-------|
+| Author | Joseph Morukhuladi |
+| License | MIT |
+| Version | 2.0.0 |
+| Year | 2026 |
 
 ---
 
-## Initialization Example
+# Getting Started
 
-To start using Qwery, initialize the instance with a configuration object and call the asynchronous create() method to load the storage into memory.
+## Installation
+
+Include the library.
+
+```html
+<script src="qwery.js"></script>
+```
+
+---
+
+## Initialization
 
 ```javascript
 const qwery = new Qwery({
-	name: "myAppDatabase",
-	log: true // Enables console logging for operations
-})
+    name: "myAppDatabase",
+    log: true
+});
 
-qwery.create()
+qwery.create();
+```
+
+### Using Session Storage
+
+```javascript
+const qwery = new Qwery({
+    name: "mySessionDatabase",
+    storage: sessionStorage
+});
+
+qwery.create();
 ```
 
 ---
 
-## Usage Examples
+# CRUD Operations
 
-The following examples demonstrate how to use the core functions based on the library test suite.
-
-### Adding Data
-
-Add an object to a specific dataset. If the dataset does not exist, it is created automatically.
+## Add
 
 ```javascript
-const user = {id: "user_1", name: "John Doe"}
-
-await qwery.add({
-	dataset: "users",
-	data: user
-})
+qwery
+    .query("users")
+    .add({
+        id: qwery.uuid(),
+        name: "John Doe",
+        age: 28
+    });
 ```
 
-### Updating Data
-
-Update existing records by matching a specific field and merging new data properties into the object.
+Add multiple records.
 
 ```javascript
-await qwery.update({
-	dataset: "profile",
-	field: "id",
-	value: 1,
-	data: {status: "online"} // This merges into the existing record
-})
-```
-
-### Removing Data
-
-Remove a specific record from a dataset based on a field value.
-
-```javascript
-await qwery.remove({
-	dataset: "tasks",
-	predicate: (x) => x.id === "A1"
-})
+qwery
+    .query("users")
+    .add([
+        {
+            id: 1,
+            name: "John"
+        },
+        {
+            id: 2,
+            name: "Sarah"
+        }
+    ]);
 ```
 
 ---
 
-## Public Functions
+## Find
 
-- create(): Initializes the storage and primes the memory cache from LocalStorage.
-- json(): Returns the current state of the database from memory as an object.
-- add(properties): Adds a single data object to a specified dataset. Requires 'dataset' and 'data'.
-- get(properties): Retrieves data based on a filter function (predicate). Requires 'dataset' and 'predicate'.
-- update(properties): Updates a record by merging new data into a matching item. Requires 'dataset', 'field', 'value', and 'data'.
-- remove(properties): Deletes all matching records from a dataset. Requires 'dataset' and 'predicate'.
-- removeAll(datasetName): Deletes all records from a specific dataset.
-- count(datasetName): Returns the number of records currently in a dataset.
-- has(properties): Checks if a record exists using a predicate. Requires 'dataset' and 'predicate'.
-- truncate(): Clears all data across all datasets in the instance.
-- reset(): Deletes the storage key from LocalStorage and clears the memory cache.
-- uuid(): Generates a cryptographically secure UUID string.
-- datasetExists(name): Checks if a dataset with the given name exists in storage.
+Returns the first matching record.
+
+```javascript
+const user = qwery
+    .query("users")
+    .find(x => x.id === 1);
+```
 
 ---
 
-## Links
+## Update
 
-- Library Code: [https://github.com/Staviro/Qwery/blob/main/content/lib/qwery.js](https://github.com/Staviro/Qwery/blob/main/content/lib/qwery.js)
-- Unit Tests / Examples: [https://github.com/Staviro/Qwery/blob/main/content/js/tests/qwery.tests.js](https://github.com/Staviro/Qwery/blob/main/content/js/tests/qwery.tests.js)
-- Public site: [https://iomushub.co.za/lib/qwery](https://iomushub.co.za/lib/qwery)
+Updates all matching records.
+
+```javascript
+qwery
+    .query("users")
+    .update(
+        x => x.id === 1,
+        {
+            online: true
+        }
+    );
+```
+
+---
+
+## Delete
+
+```javascript
+qwery
+    .query("users")
+    .delete(x => x.id === 1);
+```
+
+---
+
+## Clear a Dataset
+
+```javascript
+qwery
+    .query("users")
+    .clear();
+```
+
+---
+
+# Query Examples
+
+## Filter Records
+
+```javascript
+const adults = qwery
+    .query("users")
+    .where(x => x.age >= 18)
+    .get();
+```
+
+---
+
+## Order Results
+
+```javascript
+const users = qwery
+    .query("users")
+    .orderBy(x => x.age)
+    .get();
+```
+
+Descending order.
+
+```javascript
+const users = qwery
+    .query("users")
+    .orderByDesc(x => x.age)
+    .get();
+```
+
+---
+
+## Select Specific Fields
+
+```javascript
+const users = qwery
+    .query("users")
+    .select(x => ({
+        id: x.id,
+        name: x.name
+    }))
+    .get();
+```
+
+---
+
+## Distinct
+
+```javascript
+const countries = qwery
+    .query("users")
+    .distinct(x => x.country)
+    .get();
+```
+
+---
+
+## Paging
+
+```javascript
+const page = qwery
+    .query("users")
+    .page(2, 10)
+    .get();
+```
+
+Equivalent to records 11–20.
+
+---
+
+## Skip / Take
+
+```javascript
+const users = qwery
+    .query("users")
+    .skip(10)
+    .take(5)
+    .get();
+```
+
+---
+
+## First / Last
+
+```javascript
+const first = qwery
+    .query("users")
+    .first();
+
+const last = qwery
+    .query("users")
+    .last();
+```
+
+---
+
+## Count
+
+```javascript
+const count = qwery
+    .query("users")
+    .count();
+```
+
+---
+
+## Any
+
+```javascript
+const hasUsers = qwery
+    .query("users")
+    .any();
+```
+
+---
+
+## Empty
+
+```javascript
+const isEmpty = qwery
+    .query("users")
+    .empty();
+```
+
+---
+
+# Database Functions
+
+## Current Database
+
+```javascript
+const json = qwery.json();
+```
+
+---
+
+## Check if a Dataset Exists
+
+```javascript
+const exists = qwery.datasetExists("users");
+```
+
+---
+
+## Truncate Database
+
+Removes all records from every dataset while preserving the database.
+
+```javascript
+qwery.truncate();
+```
+
+---
+
+## Reset Database
+
+Deletes the storage and clears the in-memory cache.
+
+```javascript
+qwery.reset();
+```
+
+---
+
+## Generate UUID
+
+```javascript
+const id = qwery.uuid();
+```
+
+---
+
+# Public API
+
+## Qwery
+
+| Method | Description |
+|---------|-------------|
+| `create()` | Initializes the database and loads it into memory. |
+| `query(collection)` | Creates a new query builder for a dataset. |
+| `json()` | Returns the in-memory database. |
+| `truncate()` | Removes all records from every dataset. |
+| `reset()` | Deletes the persisted database and clears memory. |
+| `uuid()` | Generates a cryptographically secure UUID. |
+| `datasetExists(name)` | Determines whether a dataset exists. |
+
+---
+
+## QueryBuilder
+
+| Method | Description |
+|---------|-------------|
+| `add(data)` | Adds one or more records. |
+| `where(predicate)` | Filters records. |
+| `find(predicate)` | Returns the first matching record. |
+| `update(predicate, data)` | Updates matching records. |
+| `delete(predicate)` | Deletes matching records. |
+| `clear()` | Removes every record from the dataset. |
+| `orderBy(selector)` | Sorts ascending. |
+| `orderByDesc(selector)` | Sorts descending. |
+| `distinct(selector)` | Returns distinct records based on a selector. |
+| `select(selector)` | Projects records into a new shape. |
+| `skip(count)` | Skips records. |
+| `take(count)` | Takes records. |
+| `page(page, pageSize)` | Returns a page of results. |
+| `first()` | Returns the first record. |
+| `last()` | Returns the last record. |
+| `get()` | Returns the current query results. |
+| `count()` | Returns the number of records. |
+| `any()` | Returns `true` if records exist. |
+| `empty()` | Returns `true` if no records exist. |
+
+---
+
+# Storage Providers
+
+By default, Qwery persists data to `localStorage`.
+
+You can also provide any object that implements the Web Storage API.
+
+```javascript
+const qwery = new Qwery({
+    name: "myDatabase",
+    storage: sessionStorage
+});
+```
+
+Custom storage providers must implement:
+
+- `getItem(key)`
+- `setItem(key, value)`
+- `removeItem(key)`
+
+---
+
+# Links
+
+- **GitHub:** https://github.com/Staviro/Qwery
+- **Library:** https://github.com/Staviro/Qwery/blob/main/content/lib/qwery.js
+- **Unit Tests:** https://github.com/Staviro/Qwery/blob/main/content/js/tests/qwery.tests.js
+- **Documentation:** https://iomushub.co.za/lib/qwery

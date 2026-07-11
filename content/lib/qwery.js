@@ -1,12 +1,12 @@
 "use strict"
 /**
- * Qwery JS v1.0.0
+ * Qwery JS v2.0.0
  * (c) 2026 Joseph Morukhuladi
  * Licensed under MIT
  */
 
 /**
- * Class for creating and managing a lightweight JSON storage in LocalStorage with memory caching.
+ * Class for creating and managing a lightweight JSON document store with in-memory caching.
  */
 class Qwery {
 	/**
@@ -18,21 +18,11 @@ class Qwery {
 	constructor(config) {
 		this.configuration = {
 			name: config.name,
-			log: config.log ?? false
+			log: config.log ?? false,
+			storage: config.storage ?? localStorage
 		}
 		/** @private */
 		this._db = null
-	}
-
-	/**
-	 * Internal library messages.
-	 * @private
-	 */
-	messages = {
-		dataRequired: "'data' key is required",
-		datasetRequired: "'dataset' key is required",
-		notCreated: "Qwery object has not been created. Run create() first.",
-		notFound: "Record not found in the dataset."
 	}
 
 	/**
@@ -40,9 +30,10 @@ class Qwery {
 	 * @returns {Qwery} The current Qwery instance.
 	 */
 	create() {
+		const key = this._qweryKey()
+
 		try {
-			const key = this._qweryKey()
-			const raw = localStorage.getItem(key)
+			const raw = this.configuration.storage.getItem(key)
 			if (raw === null) {
 				this._db = {
 					datasets: [],
@@ -56,9 +47,20 @@ class Qwery {
 			}
 			return this
 		} catch (e) {
-			console.error("Qwery: Initialization failed", e)
+			console.error("Qwery: Initialization failed", e);
+			this.configuration.storage.removeItem(key);
+			this._db = {
+				datasets: [],
+				createdDateTime: new Date().toISOString()
+			};
+			this._persist();
 			return this
 		}
+	}
+
+	_getDataset(name) {
+		if (!this._db) return null;
+		return this._db.datasets.find((x) => x.dataset === name)
 	}
 
 	/**
@@ -70,206 +72,11 @@ class Qwery {
 	}
 
 	/**
-	 * Adds a single item to a dataset. Creates the dataset if it doesn't exist.
-	 * @param {Object} properties
-	 * @param {string} properties.dataset - The name of the target dataset.
-	 * @param {Object} properties.data - The data object to add.
-	 * @returns {Promise<{isSuccess: boolean, message: string}>}
-	 */
-	async add(properties) {
-		try {
-			if (!this._db) throw new Error(this.messages.notCreated)
-			if (!properties.data || Object.keys(properties.data).length === 0)
-				return {isSuccess: false, message: this.messages.dataRequired}
-			if (!properties.dataset)
-				return {isSuccess: false, message: this.messages.datasetRequired}
-
-			let dataset = this._db.datasets.find(
-				(x) => x.dataset === properties.dataset
-			)
-			if (!dataset) {
-				dataset = {dataset: properties.dataset, data: []}
-				this._db.datasets.push(dataset)
-			}
-
-			dataset.data.push(properties.data)
-			this._persist()
-			this._log(`1 item added to ${properties.dataset}`)
-			return {isSuccess: true, message: "Successfully added item"}
-		} catch (e) {
-			return {isSuccess: false, message: e.message}
-		}
-	}
-
-	/**
-	 * Retrieves data based on a filter function.
-	 * Returns an array if multiple matches are found.
-	 * @param {Object} properties
-	 * @param {string} properties.dataset - The name of the dataset to search.
-	 * @param {Function} [properties.predicate] - A filter function: (item) => boolean.
-	 * @returns {Promise<Object|Array|null>}
-	 */
-	async get(properties) {
-		try {
-			if (!this._db) return null
-			const dataset = this._db.datasets.find(
-				(x) => x.dataset === properties.dataset
-			)
-			if (!dataset) return null
-
-			let results = properties.predicate
-				? dataset.data.filter(properties.predicate)
-				: dataset.data
-
-			this._log(`${results.length} item(s) fetched from ${properties.dataset}`)
-
-			if (results.length === 0) return null
-			return results
-		} catch (e) {
-			console.error("Qwery: Get operation failed", e)
-			return null
-		}
-	}
-
-	/**
-	 * Updates a record in a dataset by merging new data.
-	 * @param {Object} properties
-	 * @param {string} properties.dataset - Target dataset.
-	 * @param {string} properties.field - The key used to find the record.
-	 * @param {any} properties.value - The value to match for the field.
-	 * @param {Object} properties.data - The new data to merge into the record.
-	 * @returns {Promise<{isSuccess: boolean, message: string}>}
-	 */
-	async update(properties) {
-		try {
-			if (!this._db) throw new Error(this.messages.notCreated)
-			const dataset = this._db.datasets.find(
-				(x) => x.dataset === properties.dataset
-			)
-			if (!dataset) return {isSuccess: false, message: "Dataset not found"}
-
-			const index = dataset.data.findIndex(
-				(item) => item[properties.field] === properties.value
-			)
-			if (index === -1)
-				return {isSuccess: false, message: this.messages.notFound}
-
-			dataset.data[index] = {...dataset.data[index], ...properties.data}
-			this._persist()
-			this._log(`Updated record in ${properties.dataset}`)
-			return {isSuccess: true, message: "Successfully updated item"}
-		} catch (e) {
-			return {isSuccess: false, message: e.message}
-		}
-	}
-
-	/**
-	 * Removes all records from a dataset that match a predicate function.
-	 * @param {Object} properties
-	 * @param {string} properties.dataset
-	 * @param {function(any): boolean} properties.predicate - Returns true for items to be REMOVED.
-	 * @returns {Promise<{isSuccess: boolean, message: string, count: number}>}
-	 */
-	async remove(properties) {
-		try {
-			if (!this._db) throw new Error(this.messages.notCreated)
-
-			const dataset = this._db.datasets.find(
-				(x) => x.dataset === properties.dataset
-			)
-
-			if (!dataset) return {isSuccess: false, message: "Dataset not found"}
-
-			const initialLength = dataset.data.length
-
-			dataset.data = dataset.data.filter((item) => !properties.predicate(item))
-
-			const removedCount = initialLength - dataset.data.length
-
-			if (removedCount === 0) {
-				return {isSuccess: false, message: this.messages.notFound}
-			}
-
-			this._persist()
-			this._log(`Removed ${removedCount} records from ${properties.dataset}`)
-
-			return {
-				isSuccess: true,
-				message: `Successfully removed ${removedCount} item(s)`,
-				count: removedCount
-			}
-		} catch (e) {
-			return {isSuccess: false, message: e.message}
-		}
-	}
-
-	/**
-	 * Clears all data within a specific dataset but keeps the dataset entry.
-	 * @param {Object} properties
-	 * @param {string} properties.dataset
-	 * @returns {Promise<{isSuccess: boolean, message: string}>}
-	 */
-	async removeAll(properties) {
-		try {
-			if (!this._db) throw new Error(this.messages.notCreated)
-			const dataset = this._db.datasets.find(
-				(x) => x.dataset === properties.dataset
-			)
-			if (!dataset) return {isSuccess: false, message: "Dataset not found"}
-
-			dataset.data = []
-			this._persist()
-			this._log(`Cleared all data in ${properties.dataset}`)
-			return {isSuccess: true, message: "Successfully removed all items"}
-		} catch (e) {
-			return {isSuccess: false, message: e.message}
-		}
-	}
-
-	/**
-	 * Returns the number of records in a dataset.
-	 * @param {string} datasetName
-	 * @returns {Promise<number>}
-	 */
-	async count(datasetName) {
-		if (!this._db) return 0
-		const dataset = this._db.datasets.find((x) => x.dataset === datasetName)
-		return dataset ? dataset.data.length : 0
-	}
-
-	/**
-	 * Checks if a record exists in a dataset using a predicate.
-	 * @param {Object} properties
-	 * @param {string} properties.dataset
-	 * @param {function(any): boolean} properties.predicate - Function to test each record.
-	 * @returns {Promise<boolean>}
-	 */
-	async has(properties) {
-		const item = await this.get({
-			dataset: properties.dataset,
-			predicate: properties.predicate
-		})
-
-		return item !== null
-	}
-
-	/**
-	 * Clears all data across all datasets but maintains the instance.
-	 * @returns {Promise<void>}
-	 */
-	async truncate() {
-		if (!this._db) return
-		this._db.datasets.forEach((ds) => (ds.data = []))
-		this._persist()
-		this._log("Truncated all datasets")
-	}
-
-	/**
 	 * Deletes the storage key from LocalStorage and clears memory.
 	 * @returns {Promise<Qwery>}
 	 */
-	async reset() {
-		localStorage.removeItem(this._qweryKey())
+	reset() {
+		this.configuration.storage.removeItem(this._qweryKey())
 		this._db = null
 		this._log("Storage reset and memory cleared")
 		return this
@@ -302,7 +109,7 @@ class Qwery {
 	/** @private */
 	_persist() {
 		try {
-			localStorage.setItem(this._qweryKey(), JSON.stringify(this._db))
+			this.configuration.storage.setItem(this._qweryKey(), JSON.stringify(this._db))
 		} catch (e) {
 			console.error("Qwery: Persist to LocalStorage failed", e)
 		}
@@ -311,5 +118,229 @@ class Qwery {
 	/** @private */
 	_qweryKey() {
 		return "qwery." + this.configuration.name
+	}
+
+	/**
+	 * Creates a new QueryBuilder for the specified collection.
+	 * @param {string | Array<any>} collection
+	 * @returns {QueryBuilder}
+	 */
+	query(collection) {
+		if (!this._db)
+			throw new Error("Call create() before querying.");
+
+		return new QueryBuilder(this, collection);
+	}
+
+	/**
+	 * Clears all data across all datasets but maintains the instance.
+	 */
+	truncate() {
+		if (!this._db) return
+		this._db.datasets.forEach((ds) => (ds.data = []))
+		this._persist()
+		this._log("Truncated all datasets")
+	}
+
+}
+
+
+/**
+ * QueryBuilder class for building queries
+ * @private
+ */
+class QueryBuilder {
+	constructor(qwery, collection) {
+		this._qwery = qwery;
+		this._collection = collection;
+		this._data = this._getCollection(collection);
+	}
+
+	_getCollection(collection) {
+		if (typeof collection === "string") {
+			const dataset = this._qwery._db.datasets.find(
+				x => x.dataset === collection
+			);
+
+			this._data = [...(dataset?.data ?? [])];
+			return this._data;
+		}
+
+		if (Array.isArray(collection)) {
+			this._data = [...collection];
+			return this._data;
+		}
+
+		return [];
+	}
+
+	where(func) {
+		this._data = this._data?.filter(func) ?? [];
+		return this;
+	}
+
+	find(func) {
+		return this._data.find(func) ?? null;
+	}
+
+	delete(func) {
+		const before = this._data.length;
+		this._data = this._data?.filter(x => !func(x)) ?? [];
+		const dataset = this._qwery._getDataset(this._collection);
+		if (dataset) {
+			dataset.data = this._data;
+		}
+		this._qwery._persist();
+		return {
+			affectedRows: before - this._data.length,
+			qwery: this._qwery
+		};
+	}
+
+	update(predicate, updatedData) {
+		let affected = 0;
+		this._data = this._data.map(item => {
+			if (!predicate(item))
+				return item;
+			affected++;
+			return {
+				...item,
+				...updatedData
+			};
+		});
+
+		const dataset = this._qwery._getDataset(this._collection);
+		if (dataset)
+			dataset.data = this._data;
+		this._qwery._persist();
+		return {
+			affectedRows: affected,
+			qwery: this._qwery
+		};
+	}
+
+	add(data) {
+		const dataset = this._qwery._getDataset(this._collection);
+		if (dataset) {
+			if (Array.isArray(data)) {
+				dataset.data.push(...data);
+			}
+			else {
+				dataset.data.push(data);
+			}
+		}
+		else {
+			this._qwery._db.datasets.push({
+				dataset: this._collection,
+				data: Array.isArray(data) ? data : [data]
+			});
+		}
+		const affected = Array.isArray(data)
+			? data.length
+			: 1;
+
+		this._qwery._persist();
+		return {
+			affectedRows: affected,
+			qwery: this._qwery
+		};
+	}
+
+	orderBy(selector) {
+		this._data.sort((a, b) => {
+			const left = selector(a);
+			const right = selector(b);
+
+			if (left < right) return -1;
+			if (left > right) return 1;
+			return 0;
+		});
+
+		return this;
+	}
+
+	orderByDesc(selector) {
+		this._data.sort((a, b) => {
+			const left = selector(a);
+			const right = selector(b);
+			if (left < right) return 1;
+			if (left > right) return -1;
+			return 0;
+		});
+
+		return this;
+	}
+
+	distinct(selector) {
+		const seen = new Set();
+		this._data = this._data.filter(item => {
+			const key = selector(item);
+			if (seen.has(key))
+				return false;
+			seen.add(key);
+			return true;
+		});
+		return this;
+	}
+
+	take(count) {
+		this._data = this._data.slice(0, count);
+		return this;
+	}
+
+	skip(count) {
+		this._data = this._data.slice(count);
+		return this;
+	}
+
+	page(page, pageSize) {
+		const start = (page - 1) * pageSize;
+		const end = start + pageSize;
+		this._data = this._data.slice(start, end);
+		return this;
+	}
+
+	select(func) {
+		this._data = this._data.map(func);
+		return this;
+	}
+
+	first() {
+		return this._data[0] ?? null;
+	}
+
+	last() {
+		return this._data[this._data.length - 1] ?? null;
+	}
+
+	get() {
+		return this._data;
+	}
+
+	count() {
+		return this._data.length;
+	}
+
+	any() {
+		return this._data.length > 0;
+	}
+
+	empty() {
+		return this._data.length === 0;
+	}
+
+	clear() {
+		this._data = [];
+		const dataset = this._qwery._getDataset(this._collection);
+		let count = 0;
+		if (dataset) {
+			count = dataset.data.length;
+			dataset.data = this._data;
+		}
+		this._qwery._persist();
+		return {
+			affectedRows: count,
+			qwery: this._qwery
+		};
 	}
 }
